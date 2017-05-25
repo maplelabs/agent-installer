@@ -268,11 +268,16 @@ def install_configurator(host, port):
     install and start configurator
     :return: 
     """
+    # kill existing configurator service
+
+    run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
+    if os.path.isdir(CONFIGURATOR_DIR):
+        shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
     print "downloading configurator..."
     # download_and_extract_tar(configurator_source_url, "/tmp/configurator.tar.gz", extract_dir="/opt")
     clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR)
     print "setup configurator..."
-    if os.path.isdir("/opt/configurator-exporter"):
+    if os.path.isdir(CONFIGURATOR_DIR):
         cmd1 = "pip install --upgrade web.py mako"
         run_cmd(cmd1, shell=True)
         print "starting configurator ..."
