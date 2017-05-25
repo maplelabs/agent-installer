@@ -9,16 +9,18 @@ import sys
 import tarfile
 import urllib
 
-collectd_source_url = "https://github.com/maplelabs/collectd/releases/download/" \
+COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 # collectd_source_url = "https://github.com/upendrasahu/collectd/releases/download/" \
 #                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
-collectd_source_file = "collectd-custom-5.6.1"
+COLLCTD_SOURCE_FILE = "collectd-custom-5.6.1"
 
 # configurator_source_url = "http://10.81.1.134:8000/configurator.tar.gz"
 CONFIGURATOR_SOURCE_REPO = "https://github.com/maplelabs/configurator-exporter"
 CONFIGURATOR_DIR = "/opt/configurator-exporter"
-collectd_plugins_source_url = "http://10.81.1.134:8000/plugins.tar.gz"
+# collectd_plugins_source_url = "http://10.81.1.134:8000/plugins.tar.gz"
+COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
+COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
 
 # check output function for python 2.6
 if "check_output" not in dir(subprocess):
@@ -149,7 +151,7 @@ def setup_collectd():
     """
     # download and extract collectd
     print "downloading collectd..."
-    download_and_extract_tar(collectd_source_url, "/tmp/{0}.tar.bz2".format(collectd_source_file), tarfile_type="r:bz2")
+    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2")
 
     try:
         shutil.rmtree("/opt/collectd", ignore_errors=True)
@@ -157,11 +159,11 @@ def setup_collectd():
         pass
 
     print "setup collectd..."
-    if os.path.isdir("/tmp/{0}".format(collectd_source_file)):
-        cmd = "cd /tmp/{0} && ./configure && make all install".format(collectd_source_file)
+    if os.path.isdir("/tmp/{0}".format(COLLCTD_SOURCE_FILE)):
+        cmd = "cd /tmp/{0} && ./configure && make all install".format(COLLCTD_SOURCE_FILE)
         run_cmd(cmd, shell=True)
         try:
-            shutil.copyfile("/tmp/{0}/src/my_types.db".format(collectd_source_file), "/opt/collectd/my_types.db")
+            shutil.copyfile("/tmp/{0}/src/my_types.db".format(COLLCTD_SOURCE_FILE), "/opt/collectd/my_types.db")
         except Exception as err:
             print err
 
@@ -177,14 +179,14 @@ def create_collectd_service():
         print "ubuntu version: {0}".format(version)
         if version < 16.04:
             try:
-                shutil.copyfile("/tmp/{0}/init_scripts/ubuntu14.init".format(collectd_source_file),
+                shutil.copyfile("/tmp/{0}/init_scripts/ubuntu14.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/init.d/collectd")
             except shutil.Error as err:
                 print >> sys.stderr, err
             run_cmd("chmod +x /etc/init.d/collectd", shell=True)
         else:
             try:
-                shutil.copyfile("/tmp/{0}/init_scripts/ubuntu16.init".format(collectd_source_file),
+                shutil.copyfile("/tmp/{0}/init_scripts/ubuntu16.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/systemd/system/collectd.service")
             except shutil.Error as err:
                 print >> sys.stderr, err
@@ -196,14 +198,14 @@ def create_collectd_service():
         print "centos version: {0}".format(version)
         if version < 7.0:
             try:
-                shutil.copyfile("/tmp/{0}/init_scripts/centos6.init".format(collectd_source_file),
+                shutil.copyfile("/tmp/{0}/init_scripts/centos6.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/init.d/collectd")
             except shutil.Error as err:
                 print >> sys.stderr, err
             run_cmd("chmod +x /etc/init.d/collectd", shell=True)
         else:
             try:
-                shutil.copyfile("/tmp/{0}/init_scripts/centos7.init".format(collectd_source_file),
+                shutil.copyfile("/tmp/{0}/init_scripts/centos7.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/systemd/system/collectd.service")
             except shutil.Error as err:
                 print >> sys.stderr, err
@@ -249,21 +251,21 @@ def add_collectd_plugins():
     add plugins to collectd installed 
     :return: 
     """
-    download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
-    # clone_git_repo(collectd_plugins_source_url, "/tmp/plugins")
-    try:
-        shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
-    except shutil.Error as err:
-        print >> sys.stderr, err
+    # download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
+    clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR)
+    # try:
+    #     shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
+    # except shutil.Error as err:
+    #     print >> sys.stderr, err
 
     try:
-        shutil.copyfile("/tmp/plugins/collectd.conf", "/opt/collectd/etc/collectd.conf")
+        shutil.move("{0}/collectd.conf".format(COLLECTD_PLUGINS_DIR), "/opt/collectd/etc/collectd.conf")
     except shutil.Error as err:
         print >> sys.stderr, err
 
     if not os.path.isfile("/opt/collectd/my_types.db"):
         try:
-            shutil.copyfile("/tmp/plugins/my_types.db", "/opt/collectd/my_types.db")
+            shutil.move("{0}/my_types.db".format(COLLECTD_PLUGINS_DIR), "/opt/collectd/my_types.db")
         except shutil.Error as err:
             print err
 
