@@ -9,8 +9,10 @@ import sys
 import tarfile
 import urllib
 
-collectd_source_url = "https://github.com/upendrasahu/collectd/releases/download/" \
+collectd_source_url = "https://github.com/maplelabs/collectd/releases/download/" \
                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
+# collectd_source_url = "https://github.com/upendrasahu/collectd/releases/download/" \
+#                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 collectd_source_file = "collectd-custom-5.6.1"
 
 # configurator_source_url = "http://10.81.1.134:8000/configurator.tar.gz"
@@ -158,6 +160,10 @@ def setup_collectd():
     if os.path.isdir("/tmp/{0}".format(collectd_source_file)):
         cmd = "cd /tmp/{0} && ./configure && make all install".format(collectd_source_file)
         run_cmd(cmd, shell=True)
+        try:
+            shutil.copyfile("/tmp/{0}/src/my_types.db".format(collectd_source_file), "/opt/collectd/my_types.db")
+        except Exception as err:
+            print err
 
 
 def create_collectd_service():
@@ -255,10 +261,11 @@ def add_collectd_plugins():
     except shutil.Error as err:
         print >> sys.stderr, err
 
-    try:
-        shutil.copyfile("/tmp/plugins/my_types.db", "/opt/collectd/my_types.db")
-    except shutil.Error as err:
-        print >> sys.stderr, err
+    if not os.path.isfile("/opt/collectd/my_types.db"):
+        try:
+            shutil.copyfile("/tmp/plugins/my_types.db", "/opt/collectd/my_types.db")
+        except shutil.Error as err:
+            print err
 
     run_cmd("service collectd restart", shell=True)
 
