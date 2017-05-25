@@ -281,7 +281,7 @@ def install_configurator(host, port):
         cmd1 = "pip install --upgrade web.py mako"
         run_cmd(cmd1, shell=True)
         print "starting configurator ..."
-        run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
+        # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
         cmd2 =  "cd " + CONFIGURATOR_DIR
         cmd2 += " && nohup python api_server.py -i {0} -p {1} &".format(host, port)
         print cmd2
