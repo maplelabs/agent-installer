@@ -102,13 +102,13 @@ def install_dev_tools():
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu installing development tools and dependencies..."
         cmd = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo"
+              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev"
         run_cmd(cmd, shell=True)
 
     elif platform.dist()[0].lower() == "centos":
         print "found centos/redhat installing developments tools and dependencies..."
         cmd1 = "yum groupinstall -y 'Development Tools'"
-        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo"
+        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel"
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
@@ -257,7 +257,9 @@ def add_collectd_plugins():
     #     shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
     # except shutil.Error as err:
     #     print >> sys.stderr, err
-
+    if os.path.isfile("{0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)):
+        cmd = "pip install -r {0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)
+        run_cmd(cmd, shell=True, ignore_err=True)
     try:
         shutil.move("{0}/collectd.conf".format(COLLECTD_PLUGINS_DIR), "/opt/collectd/etc/collectd.conf")
     except shutil.Error as err:
