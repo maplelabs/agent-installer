@@ -316,7 +316,6 @@ if __name__ == '__main__':
 
     install_dev_tools()
     install_pip()
-    install_configurator(host=args.host, port=args.port)
 
     if args.installcollectd:
         print "Started installing collectd ..."
@@ -327,3 +326,6 @@ if __name__ == '__main__':
     if args.installfluentd:
         print "started installing fluentd ..."
         install_fluentd()
+
+    print "started installing configurator ..."
+    install_configurator(host=args.host, port=args.port)
