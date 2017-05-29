@@ -9,8 +9,8 @@ import sys
 import tarfile
 import urllib
 
-COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
-                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
+COLLECTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
+                     "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 # collectd_source_url = "https://github.com/upendrasahu/collectd/releases/download/" \
 #                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 COLLCTD_SOURCE_FILE = "collectd-custom-5.6.1"
@@ -71,6 +71,7 @@ def run_call(cmd, shell):
         print "error ignored"
         return
 
+
 def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, extract_dir=None):
     if extract_dir is None:
         extract_dir = '/tmp'
@@ -89,10 +90,12 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
     except tarfile.TarError as err:
         print >> sys.stderr, err
 
-def clone_git_repo(REPO_URL, LOCAL_DIR):
-    command = "git clone {} {}".format(REPO_URL, LOCAL_DIR)
+
+def clone_git_repo(repo_url, local_dir):
+    command = "git clone {0} {1}".format(repo_url, local_dir)
     print command
     run_call(command, shell=True)
+
 
 def install_dev_tools():
     """
@@ -151,7 +154,7 @@ def setup_collectd():
     """
     # download and extract collectd
     print "downloading collectd..."
-    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2")
+    download_and_extract_tar(COLLECTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2")
 
     try:
         shutil.rmtree("/opt/collectd", ignore_errors=True)
@@ -293,7 +296,7 @@ def install_configurator(host, port):
         run_cmd(cmd1, shell=True)
         print "starting configurator ..."
         # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
-        cmd2 =  "cd " + CONFIGURATOR_DIR
+        cmd2 = "cd " + CONFIGURATOR_DIR
         cmd2 += " && nohup python api_server.py -i {0} -p {1} &".format(host, port)
         print cmd2
         run_call(cmd2, shell=True)
