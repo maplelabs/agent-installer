@@ -122,25 +122,34 @@ def install_dev_tools():
         run_cmd(cmd2, shell=True)
 
 
+# def install_pip():
+#     """
+#     install latest version of pip
+#     :return:
+#     """
+#     output = run_cmd("pip -V", shell=True, print_output=True)
+#     try:
+#         if output.split(" ")[1] == "9.0.1":
+#             return
+#         else:
+#             print "install latest version of pip"
+#             pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
+#             try:
+#                 urllib.urlretrieve(pip_install_url, "/tmp/get-pip.py")
+#             except IOError as err:
+#                 print >> sys.stderr, err
+#             run_cmd("python /tmp/get-pip.py", shell=True)
+#     except Exception as err:
+#         print >> sys.stderr, err
+
 def install_pip():
-    """
-    install latest version of pip
-    :return: 
-    """
-    output = run_cmd("pip -V", shell=True, print_output=True)
+    print "install latest version of pip"
+    pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
     try:
-        if output.split(" ")[1] == "9.0.1":
-            return
-        else:
-            print "install latest version of pip"
-            pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
-            try:
-                urllib.urlretrieve(pip_install_url, "/tmp/get-pip.py")
-            except IOError as err:
-                print >> sys.stderr, err
-            run_cmd("python /tmp/get-pip.py", shell=True)
-    except Exception as err:
+        urllib.urlretrieve(pip_install_url, "/tmp/get-pip.py")
+    except IOError as err:
         print >> sys.stderr, err
+    run_cmd("python /tmp/get-pip.py", shell=True)
 
 
 def install_python_packages():
