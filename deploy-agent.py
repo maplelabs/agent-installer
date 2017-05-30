@@ -198,9 +198,9 @@ def create_collectd_service():
     """
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu ..."
-        version = float(platform.dist()[1][0:3])
+        version = platform.dist()[1]
         print "ubuntu version: {0}".format(version)
-        if version < 16.04:
+        if version < "16.04":
             try:
                 shutil.copyfile("/tmp/{0}/init_scripts/ubuntu14.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/init.d/collectd")
@@ -217,9 +217,9 @@ def create_collectd_service():
 
     elif platform.dist()[0].lower() == "centos":
         print "found centos ..."
-        version = float(platform.dist()[1][0:2])
+        version = platform.dist()[1]
         print "centos version: {0}".format(version)
-        if version < 7.0:
+        if version < "7.0":
             try:
                 shutil.copyfile("/tmp/{0}/init_scripts/centos6.init".format(COLLCTD_SOURCE_FILE),
                                 "/etc/init.d/collectd")
