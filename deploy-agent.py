@@ -10,7 +10,7 @@ import tarfile
 import urllib
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
-                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
+                     "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 # collectd_source_url = "https://github.com/upendrasahu/collectd/releases/download/" \
 #                       "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
 COLLCTD_SOURCE_FILE = "collectd-custom-5.6.1"
@@ -58,18 +58,25 @@ def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     except subprocess.CalledProcessError as error:
         print >> sys.stderr, "Error: {0}".format(error)
         if not ignore_err:
-            sys.exit(127)
+            sys.exit(1)
         print "error ignored"
         return
 
 
 def run_call(cmd, shell):
+    """
+    run a command don't check output
+    :param cmd: 
+    :param shell: 
+    :return: 
+    """
     try:
         subprocess.call(cmd, shell=shell)
     except subprocess.CalledProcessError as error:
         print >> sys.stderr, "Error: {0}".format(error)
         print "error ignored"
         return
+
 
 def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, extract_dir=None):
     if extract_dir is None:
@@ -89,10 +96,12 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
     except tarfile.TarError as err:
         print >> sys.stderr, err
 
+
 def clone_git_repo(REPO_URL, LOCAL_DIR):
-    command = "git clone {} {}".format(REPO_URL, LOCAL_DIR)
+    command = "git clone {0} {1}".format(REPO_URL, LOCAL_DIR)
     print command
     run_call(command, shell=True)
+
 
 def install_dev_tools():
     """
@@ -102,13 +111,13 @@ def install_dev_tools():
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu installing development tools and dependencies..."
         cmd = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev"
+              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git"
         run_cmd(cmd, shell=True)
 
     elif platform.dist()[0].lower() == "centos":
         print "found centos/redhat installing developments tools and dependencies..."
         cmd1 = "yum groupinstall -y 'Development Tools'"
-        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel"
+        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git"
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
@@ -293,7 +302,7 @@ def install_configurator(host, port):
         run_cmd(cmd1, shell=True)
         print "starting configurator ..."
         # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
-        cmd2 =  "cd " + CONFIGURATOR_DIR
+        cmd2 = "cd " + CONFIGURATOR_DIR
         cmd2 += " && nohup python api_server.py -i {0} -p {1} &".format(host, port)
         print cmd2
         run_call(cmd2, shell=True)
