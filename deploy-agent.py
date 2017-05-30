@@ -108,16 +108,21 @@ def install_dev_tools():
     install development tools and dependencies required to compile collectd
     :return: 
     """
-    if platform.dist()[0].lower() == "ubuntu":
+    if platform.dist()[0].lower() == "ubuntu" or platform.dist()[0].lower() == "debian":
         print "found ubuntu installing development tools and dependencies..."
-        cmd = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
+        cmd1 = "apt-get update -y"
+        cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git"
-        run_cmd(cmd, shell=True)
+        run_cmd(cmd1, shell=True)
+        run_cmd(cmd2, shell=True)
 
-    elif platform.dist()[0].lower() == "centos":
+    elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
         print "found centos/redhat installing developments tools and dependencies..."
-        cmd1 = "yum groupinstall -y 'Development Tools'"
+        # cmd1 = "yum groupinstall -y 'Development Tools'"
+        cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
         cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git"
+        cmd3 = "yum update -y"
+        run_cmd(cmd3, shell=True)
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
