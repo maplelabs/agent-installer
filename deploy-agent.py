@@ -198,7 +198,7 @@ def create_collectd_service():
     """
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu ..."
-        version = float(platform.dist()[1])
+        version = float(platform.dist()[1][0:3])
         print "ubuntu version: {0}".format(version)
         if version < 16.04:
             try:
@@ -213,11 +213,11 @@ def create_collectd_service():
                                 "/etc/systemd/system/collectd.service")
             except shutil.Error as err:
                 print >> sys.stderr, err
-            run_cmd("systemctl daemon-reload", shell=True)
+            run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
 
     elif platform.dist()[0].lower() == "centos":
         print "found centos ..."
-        version = float(platform.dist()[1])
+        version = float(platform.dist()[1][0:2])
         print "centos version: {0}".format(version)
         if version < 7.0:
             try:
@@ -232,7 +232,7 @@ def create_collectd_service():
                                 "/etc/systemd/system/collectd.service")
             except shutil.Error as err:
                 print >> sys.stderr, err
-            run_cmd("systemctl daemon-reload", shell=True)
+            run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
 
     print "terminate any old instance of collectd if available"
     run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
@@ -294,7 +294,7 @@ def add_collectd_plugins():
         except shutil.Error as err:
             print err
 
-    run_cmd("service collectd restart", shell=True)
+    # run_cmd("service collectd restart", shell=True)
 
 
 def install_configurator(host, port):
