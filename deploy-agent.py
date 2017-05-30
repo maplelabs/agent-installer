@@ -105,13 +105,13 @@ def install_dev_tools():
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu installing development tools and dependencies..."
         cmd = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev"
+              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git"
         run_cmd(cmd, shell=True)
 
     elif platform.dist()[0].lower() == "centos":
         print "found centos/redhat installing developments tools and dependencies..."
         cmd1 = "yum groupinstall -y 'Development Tools'"
-        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel"
+        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git"
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
