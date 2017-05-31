@@ -51,7 +51,7 @@ def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     :return: 
     """
     try:
-        output = subprocess.check_output(cmd.split(), shell=shell)
+        output = subprocess.check_output(cmd, shell=shell)
         if print_output:
             print output
             return output
@@ -71,7 +71,7 @@ def run_call(cmd, shell):
     :return: 
     """
     try:
-        subprocess.call(cmd.split(), shell=shell)
+        subprocess.call(cmd, shell=shell)
     except subprocess.CalledProcessError as error:
         print >> sys.stderr, "Error: {0}".format(error)
         print "error ignored"
