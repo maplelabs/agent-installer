@@ -112,7 +112,7 @@ def install_dev_tools():
         print "found ubuntu installing development tools and dependencies..."
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git"
+              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
@@ -120,7 +120,7 @@ def install_dev_tools():
         print "found centos/redhat installing developments tools and dependencies..."
         # cmd1 = "yum groupinstall -y 'Development Tools'"
         cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
-        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git"
+        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git screen"
         cmd3 = "yum update -y"
         run_cmd(cmd3, shell=True)
         run_cmd(cmd1, shell=True)
@@ -318,7 +318,8 @@ def install_configurator(host, port):
         # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
         # cmd2 = "cd " + CONFIGURATOR_DIR
         # cmd2 += " && python api_server.py -i {0} -p {1} > /dev/null 2>&1 & disown".format(host, port)
-        cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} </dev/null >/dev/null 2>&1 &".format(CONFIGURATOR_DIR, host, port)
+        # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
+        cmd2 = "screen -d -m python {0}/api_server.py -i {1} -p {2}".format(CONFIGURATOR_DIR, host, port)
         print cmd2
         run_call(cmd2, shell=True)
 
