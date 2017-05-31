@@ -319,7 +319,7 @@ def install_configurator(host, port):
         cmd2 = "cd " + CONFIGURATOR_DIR
         cmd2 += " && nohup python api_server.py -i {0} -p {1} &".format(host, port)
         print cmd2
-        run_call(cmd2, shell=True)
+        run_cmd(cmd2, shell=True, ignore_err=True)
 
 
 if __name__ == '__main__':
