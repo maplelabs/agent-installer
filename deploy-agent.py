@@ -355,3 +355,5 @@ if __name__ == '__main__':
 
     print "started installing configurator ..."
     install_configurator(host=args.host, port=args.port)
+
+    sys.exit(0)
