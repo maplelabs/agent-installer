@@ -238,7 +238,7 @@ def create_collectd_service():
     run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
     print "start collectd ..."
     # run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-    run_cmd("service collectd start", shell=True)
+    run_cmd("service collectd start", shell=True, print_output=True)
     run_cmd("service collectd status", shell=True, print_output=True)
 
 
