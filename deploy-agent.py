@@ -319,7 +319,7 @@ def install_configurator(host, port):
         # cmd2 = "cd " + CONFIGURATOR_DIR
         # cmd2 += " && python api_server.py -i {0} -p {1} > /dev/null 2>&1 & disown".format(host, port)
         # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
-        cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}"'.format(CONFIGURATOR_DIR, host, port)
+        cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
         print cmd2
         run_call(cmd2, shell=True)
 
