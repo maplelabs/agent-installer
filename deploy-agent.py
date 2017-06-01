@@ -319,9 +319,10 @@ def install_configurator(host, port):
         # cmd2 = "cd " + CONFIGURATOR_DIR
         # cmd2 += " && python api_server.py -i {0} -p {1} > /dev/null 2>&1 & disown".format(host, port)
         # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
-        cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
+        cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host, port)
+        # cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
         print cmd2
-        # run_call(cmd2, shell=True)
+        run_call(cmd2, shell=True)
 
 def create_configurator_service():
     """
@@ -370,7 +371,7 @@ def create_configurator_service():
     run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
     print "start configurator ..."
     # run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-    run_cmd("service configurator start", shell=True, print_output=True)
+    run_cmd("sudo service configurator start", shell=True, print_output=True)
     run_cmd("service configurator status", shell=True, print_output=True)
 
 
@@ -408,5 +409,5 @@ if __name__ == '__main__':
 
     print "started installing configurator ..."
     install_configurator(host=args.host, port=args.port)
-    create_configurator_service()
+    # create_configurator_service()
     sys.exit(0)
