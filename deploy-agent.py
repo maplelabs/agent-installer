@@ -113,8 +113,8 @@ def install_dev_tools():
         print "found ubuntu installing development tools and dependencies..."
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-               "zlib1g-dev python-dev libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
-        # run_cmd(cmd1, shell=True)
+               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
+        run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
     elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
