@@ -321,7 +321,7 @@ def install_configurator(host, port):
         # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
         cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
         print cmd2
-        run_call(cmd2, shell=True)
+        # run_call(cmd2, shell=True)
 
 def create_configurator_service():
     """
