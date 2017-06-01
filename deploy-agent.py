@@ -41,6 +41,10 @@ if "check_output" not in dir(subprocess):
 
     subprocess.check_output = f
 
+def set_env(**kwargs):
+    for key, value in kwargs.iteritems():
+        os.environ[key] = value
+        os.environ[str(key).upper()] = value
 
 def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     """
@@ -78,16 +82,25 @@ def run_call(cmd, shell):
         print "error ignored"
         return
 
+def download_file(url, local_path, proxy=None):
+    if proxy:
+        cmd = "wget -e use_proxy=on -e http_proxy={0} -O {1} {2}".format(proxy, local_path, url)
+    else:
+        cmd = "wget -O {0} {1}".format(local_path, url)
+    print cmd
+    run_call(cmd, shell=True)
 
-def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, extract_dir=None):
+def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, extract_dir=None, proxy=None):
     if extract_dir is None:
         extract_dir = '/tmp'
     if tarfile_type is None:
         tarfile_type = "r:gz"
-    try:
-        urllib.urlretrieve(tarfile_url, local_file_name)
-    except IOError as err:
-        print >> sys.stderr, err
+    # try:
+    #     urllib.urlretrieve(tarfile_url, local_file_name)
+    # except IOError as err:
+    #     print >> sys.stderr, err
+
+    download_file(tarfile_url, local_file_name, proxy)
 
     print "untar " + local_file_name
     try:
@@ -98,7 +111,10 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
         print >> sys.stderr, err
 
 
-def clone_git_repo(REPO_URL, LOCAL_DIR):
+def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
+    if proxy:
+        cmd = "git config --global http.proxy {0}".format(proxy)
+        run_call(cmd, shell=True)
     command = "git clone {0} {1}".format(REPO_URL, LOCAL_DIR)
     print command
     run_call(command, shell=True)
@@ -113,15 +129,15 @@ def install_dev_tools():
         print "found ubuntu installing development tools and dependencies..."
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
-        run_cmd(cmd1, shell=True)
+              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+        # run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
     elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
         print "found centos/redhat installing developments tools and dependencies..."
         # cmd1 = "yum groupinstall -y 'Development Tools'"
         cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
-        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git screen"
+        cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
         cmd3 = "yum update -y"
         # run_cmd(cmd3, shell=True)
         run_cmd(cmd1, shell=True)
@@ -148,34 +164,50 @@ def install_dev_tools():
 #     except Exception as err:
 #         print >> sys.stderr, err
 
-def install_pip():
+# def install_pip():
+#     print "install latest version of pip"
+#     pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
+#     try:
+#         urllib.urlretrieve(pip_install_url, "/tmp/get-pip.py")
+#     except IOError as err:
+#         print >> sys.stderr, err
+#     run_cmd("python /tmp/get-pip.py", shell=True)
+
+def install_pip(proxy=None):
     print "install latest version of pip"
     pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
-    try:
-        urllib.urlretrieve(pip_install_url, "/tmp/get-pip.py")
-    except IOError as err:
-        print >> sys.stderr, err
-    run_cmd("python /tmp/get-pip.py", shell=True)
+    local_file = "/tmp/get-pip.py"
+    download_file(pip_install_url, local_file, proxy)
+    # if proxy:
+    #     cmd = "curl -x {0} -o /tmp/get-pip.py {1}".format(proxy, pip_install_url)
+    # else:
+    #     cmd = "curl -o /tmp/get-pip.py {0}".format(pip_install_url)
+    # print cmd
+    # run_call(cmd, shell=True)
+    run_cmd("python {0}".format(local_file), shell=True)
 
-
-def install_python_packages():
+def install_python_packages(proxy=None):
     """
     install required python packages
     :return: 
     """
     print "install python packages using pip"
-    cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako"
+    if proxy:
+        cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml " \
+               "mako web.py --proxy {0}".format(proxy)
+    else:
+        cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako web.py"
     run_cmd(cmd2, shell=True)
 
 
-def setup_collectd():
+def setup_collectd(proxy=None):
     """
     install a custoum collectd from source
     :return: 
     """
     # download and extract collectd
     print "downloading collectd..."
-    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2")
+    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2", proxy=proxy)
 
     try:
         shutil.rmtree("/opt/collectd", ignore_errors=True)
@@ -243,25 +275,37 @@ def create_collectd_service():
     run_cmd("service collectd status", shell=True, print_output=True)
 
 
-def install_fluentd():
+def install_fluentd(proxy=None):
     """
     install fluentd and start the service 
     :return: 
     """
 
     distro, version, name = platform.dist()
-
+    fluentd_file_name = "/tmp/install-fluentd.sh"
     if distro.lower() == "ubuntu":
         print "install fluentd for ubuntu {0} {1}".format(version, name)
-        fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent2.sh"
-        urllib.urlretrieve(fluentd_install_url_ubuntu.format(name), "/tmp/install-ubuntu-{0}-td-agent2.sh".format(name))
-        run_cmd("sh /tmp/install-ubuntu-{0}-td-agent2.sh".format(name), shell=True)
+        fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent2.sh".format(name)
+        # urllib.urlretrieve(fluentd_install_url_ubuntu.format(name), "/tmp/install-ubuntu-{0}-td-agent2.sh".format(name))
+        # run_cmd("sh /tmp/install-ubuntu-{0}-td-agent2.sh".format(name), shell=True)
+        download_file(fluentd_install_url_ubuntu, fluentd_file_name, proxy)
+        if proxy:
+            cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
+            print cmd
+            run_cmd(cmd, shell=True, ignore_err=True)
+        run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
     elif distro.lower() == "centos":
         print "install fluentd for centos/redhat {0} {1}".format(version, name)
         fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh"
-        urllib.urlretrieve(fluentd_install_url_centos, "/tmp/install-redhat-td-agent2.sh")
-        run_cmd("sh /tmp/install-redhat-td-agent2.sh", shell=True)
+        # urllib.urlretrieve(fluentd_install_url_centos, "/tmp/install-redhat-td-agent2.sh")
+        #
+        download_file(fluentd_install_url_centos, fluentd_file_name, proxy)
+        if proxy:
+            cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
+            print cmd
+            run_cmd(cmd, shell=True, ignore_err=True)
+        run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
     print "start fluentd ..."
     run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
@@ -270,19 +314,22 @@ def install_fluentd():
     run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
 
 
-def add_collectd_plugins():
+def add_collectd_plugins(proxy=None):
     """
     add plugins to collectd installed 
     :return: 
     """
     # download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
-    clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR)
+    clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=proxy)
     # try:
     #     shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
     # except shutil.Error as err:
     #     print >> sys.stderr, err
     if os.path.isfile("{0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)):
-        cmd = "pip install -r {0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)
+        if proxy:
+            cmd = "pip install -r {0}/requirements.txt --proxy {1}".format(COLLECTD_PLUGINS_DIR, proxy)
+        else:
+            cmd = "pip install -r {0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)
         run_cmd(cmd, shell=True, ignore_err=True)
     try:
         shutil.move("{0}/collectd.conf".format(COLLECTD_PLUGINS_DIR), "/opt/collectd/etc/collectd.conf")
@@ -295,10 +342,10 @@ def add_collectd_plugins():
         except shutil.Error as err:
             print err
 
-            # run_cmd("service collectd restart", shell=True)
+    # run_cmd("service collectd restart", shell=True)
 
 
-def install_configurator(host, port):
+def install_configurator(host, port, proxy=None):
     """
     install and start configurator
     :return: 
@@ -310,11 +357,9 @@ def install_configurator(host, port):
         shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
     print "downloading configurator..."
     # download_and_extract_tar(configurator_source_url, "/tmp/configurator.tar.gz", extract_dir="/opt")
-    clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR)
+    clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR, proxy=proxy)
     print "setup configurator..."
     if os.path.isdir(CONFIGURATOR_DIR):
-        cmd1 = "pip install --upgrade web.py mako"
-        run_cmd(cmd1, shell=True)
         print "starting configurator ..."
         # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
         # cmd2 = "cd " + CONFIGURATOR_DIR
@@ -353,7 +398,7 @@ def create_configurator_service():
                                 "/etc/init/configurator.conf")
             except shutil.Error as err:
                 print >> sys.stderr, err
-                # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
+            # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
         else:
             try:
                 shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.service",
@@ -400,7 +445,7 @@ if __name__ == '__main__':
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
-    parser.add_argument('--http_proxy', action='store', default="", dest='http_proxy',
+    parser.add_argument('--http_proxy',action='store', default="", dest='http_proxy',
                         help='http proxy for connecting to internet')
     parser.add_argument('--https_proxy', action='store', default="", dest='https_proxy',
                         help='https proxy for connecting to internet')
@@ -410,20 +455,27 @@ if __name__ == '__main__':
         print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
         sys.exit(128)
 
+    if args.http_proxy:
+        set_env(http_proxy=args.http_proxy)
+    if args.https_proxy:
+        set_env(http_proxy=args.https_proxy)
+    proxy = args.https_proxy
+    if not proxy:
+        proxy = args.http_proxy
     install_dev_tools()
-    install_pip()
+    install_pip(proxy)
 
     if args.installcollectd:
         print "Started installing collectd ..."
-        install_python_packages()
-        setup_collectd()
-        add_collectd_plugins()
+        install_python_packages(proxy)
+        setup_collectd(proxy)
+        add_collectd_plugins(proxy)
         create_collectd_service()
     if args.installfluentd:
         print "started installing fluentd ..."
-        install_fluentd()
+        install_fluentd(proxy)
 
     print "started installing configurator ..."
-    install_configurator(host=args.host, port=args.port)
+    install_configurator(host=args.host, port=args.port, proxy=proxy)
     # create_configurator_service()
     sys.exit(0)
