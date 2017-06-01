@@ -323,6 +323,56 @@ def install_configurator(host, port):
         print cmd2
         run_call(cmd2, shell=True)
 
+def create_configurator_service():
+    """
+    create a service for collectd installed
+    :return:
+    """
+    if platform.dist()[0].lower() == "ubuntu":
+        print "found ubuntu ..."
+        version = platform.dist()[1]
+        print "ubuntu version: {0}".format(version)
+        if version < "16.04":
+            try:
+                shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.conf",
+                                "/etc/init/configurator.conf")
+            except shutil.Error as err:
+                print >> sys.stderr, err
+            # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
+        else:
+            try:
+                shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.service",
+                                "/etc/systemd/system/configurator.service")
+            except shutil.Error as err:
+                print >> sys.stderr, err
+            run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+
+    elif platform.dist()[0].lower() == "centos":
+        print "found centos ..."
+        version = platform.dist()[1]
+        print "centos version: {0}".format(version)
+        if version < "7.0":
+            try:
+                shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator_centos6",
+                                "/etc/init.d/configurator")
+            except shutil.Error as err:
+                print >> sys.stderr, err
+            run_cmd("chmod +x /etc/init.d/configurator", shell=True)
+        else:
+            try:
+                shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.service",
+                                "/etc/systemd/system/configurator.service")
+            except shutil.Error as err:
+                print >> sys.stderr, err
+            run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+
+    print "terminate any old instance of configurator if available"
+    run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
+    print "start configurator ..."
+    # run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+    run_cmd("service configurator start", shell=True, print_output=True)
+    run_cmd("service configurator status", shell=True, print_output=True)
+
 
 if __name__ == '__main__':
     """main function"""
@@ -335,6 +385,8 @@ if __name__ == '__main__':
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
+    parser.add_argument('--proxy',action='store', default="", dest='proxy',
+                        help='proxy for connecting to internet')
     args = parser.parse_args()
 
     if not args.installcollectd and not args.installfluentd:
@@ -356,5 +408,5 @@ if __name__ == '__main__':
 
     print "started installing configurator ..."
     install_configurator(host=args.host, port=args.port)
-
+    create_configurator_service()
     sys.exit(0)
