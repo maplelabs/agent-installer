@@ -386,8 +386,10 @@ if __name__ == '__main__':
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
-    parser.add_argument('--proxy',action='store', default="", dest='proxy',
-                        help='proxy for connecting to internet')
+    parser.add_argument('--http_proxy',action='store', default="", dest='http_proxy',
+                        help='http proxy for connecting to internet')
+    parser.add_argument('--https_proxy', action='store', default="", dest='https_proxy',
+                        help='https proxy for connecting to internet')
     args = parser.parse_args()
 
     if not args.installcollectd and not args.installfluentd:
