@@ -113,7 +113,7 @@ def install_dev_tools():
         print "found ubuntu installing development tools and dependencies..."
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
+               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git screen"
         # run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
@@ -295,7 +295,7 @@ def add_collectd_plugins():
         except shutil.Error as err:
             print err
 
-    # run_cmd("service collectd restart", shell=True)
+            # run_cmd("service collectd restart", shell=True)
 
 
 def install_configurator(host, port):
@@ -320,11 +320,19 @@ def install_configurator(host, port):
         # cmd2 = "cd " + CONFIGURATOR_DIR
         # cmd2 += " && python api_server.py -i {0} -p {1} > /dev/null 2>&1 & disown".format(host, port)
         # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
-        cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &\n\n".format(CONFIGURATOR_DIR, host, port)
-        # cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
-        print cmd2
+        # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host, port)
+        # # cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
+        # print cmd2
+        # run_call(cmd2, shell=True)
+        # sleep(5)
+        if platform.dist()[0].lower() == "ubuntu":
+            cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
+        elif platform.dist()[0].lower() == "centos":
+            cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
+                                                                                             port)
         run_call(cmd2, shell=True)
         sleep(5)
+
 
 def create_configurator_service():
     """
@@ -341,7 +349,7 @@ def create_configurator_service():
                                 "/etc/init/configurator.conf")
             except shutil.Error as err:
                 print >> sys.stderr, err
-            # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
+                # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
         else:
             try:
                 shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.service",
@@ -388,7 +396,7 @@ if __name__ == '__main__':
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
-    parser.add_argument('--http_proxy',action='store', default="", dest='http_proxy',
+    parser.add_argument('--http_proxy', action='store', default="", dest='http_proxy',
                         help='http proxy for connecting to internet')
     parser.add_argument('--https_proxy', action='store', default="", dest='https_proxy',
                         help='https proxy for connecting to internet')
