@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tarfile
 import urllib
+from time import sleep
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
@@ -323,6 +324,7 @@ def install_configurator(host, port):
         # cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
         print cmd2
         run_call(cmd2, shell=True)
+        sleep(5)
 
 def create_configurator_service():
     """
