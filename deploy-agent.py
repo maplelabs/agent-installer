@@ -44,7 +44,6 @@ if "check_output" not in dir(subprocess):
 def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
-        os.environ[str(key).upper()] = value
 
 def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     """
@@ -130,7 +129,7 @@ def install_dev_tools():
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
-        # run_cmd(cmd1, shell=True)
+        run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
     elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
