@@ -46,12 +46,12 @@ def set_env(**kwargs):
         os.environ[key] = value
 
 
-def _add_proxy_for_curl_in_file(self, proxy, file_name):
+def _add_proxy_for_curl_in_file(proxy, file_name):
     cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, file_name)
     print cmd
     run_cmd(cmd, shell=True, ignore_err=True)
 
-def _add_proxy_for_rpm_in_file(self, proxy, file_name):
+def _add_proxy_for_rpm_in_file(proxy, file_name):
     proxy_url = str(proxy).replace('http://', '')
     proxy_url = str(proxy_url).replace('https://', '')
     proxy_url = proxy_url.split(':')
