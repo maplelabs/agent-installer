@@ -10,3 +10,15 @@ optional arguments:
   -ip HOST, --host HOST
                         host ip on which configurator will listen
 ```
+
+```shell
+uninstaller.py [-h] [-sc] [-sf] [-sce]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -sc, --removecollectd
+                        remove collectd installation
+  -sf, --removefluentd  remove fluentd installation
+  -sce, --removeconfigurator
+                        remove configurator installation
+```
