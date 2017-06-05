@@ -1,4 +1,4 @@
-#usage: 
+# using scripts  
 ```shell
 deploy-agent.py [-h] [-sc] [-sf] [-p PORT] [-ip HOST]
 
