@@ -41,9 +41,11 @@ if "check_output" not in dir(subprocess):
 
     subprocess.check_output = f
 
+
 def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
+
 
 def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     """
@@ -81,6 +83,7 @@ def run_call(cmd, shell):
         print "error ignored"
         return
 
+
 def download_file(url, local_path, proxy=None):
     if proxy:
         cmd = "wget -e use_proxy=on -e http_proxy={0} -O {1} {2}".format(proxy, local_path, url)
@@ -88,6 +91,7 @@ def download_file(url, local_path, proxy=None):
         cmd = "wget -O {0} {1}".format(local_path, url)
     print cmd
     run_call(cmd, shell=True)
+
 
 def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, extract_dir=None, proxy=None):
     if extract_dir is None:
@@ -128,7 +132,7 @@ def install_dev_tools():
         print "found ubuntu installing development tools and dependencies..."
         cmd1 = "apt-get update -y"
         cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-              "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+               "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
         run_cmd(cmd1, shell=True)
         run_cmd(cmd2, shell=True)
 
@@ -185,6 +189,7 @@ def install_pip(proxy=None):
     # run_call(cmd, shell=True)
     run_cmd("python {0}".format(local_file), shell=True)
 
+
 def install_python_packages(proxy=None):
     """
     install required python packages
@@ -206,7 +211,8 @@ def setup_collectd(proxy=None):
     """
     # download and extract collectd
     print "downloading collectd..."
-    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2", proxy=proxy)
+    download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2",
+                             proxy=proxy)
 
     try:
         shutil.rmtree("/opt/collectd", ignore_errors=True)
@@ -341,7 +347,7 @@ def add_collectd_plugins(proxy=None):
         except shutil.Error as err:
             print err
 
-    # run_cmd("service collectd restart", shell=True)
+            # run_cmd("service collectd restart", shell=True)
 
 
 def install_configurator(host, port, proxy=None):
@@ -360,15 +366,7 @@ def install_configurator(host, port, proxy=None):
     print "setup configurator..."
     if os.path.isdir(CONFIGURATOR_DIR):
         print "starting configurator ..."
-        # run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
-        # cmd2 = "cd " + CONFIGURATOR_DIR
-        # cmd2 += " && python api_server.py -i {0} -p {1} > /dev/null 2>&1 & disown".format(host, port)
-        # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
-        # cmd2 = "sudo nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host, port)
-        # # cmd2 = 'screen -d -m sh -c "python {0}/api_server.py -i {1} -p {2}; sleep 1;"'.format(CONFIGURATOR_DIR, host, port)
-        # print cmd2
-        # run_call(cmd2, shell=True)
-        # sleep(5)
+
         if platform.dist()[0].lower() == "ubuntu":
             cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
             print cmd2
@@ -376,7 +374,7 @@ def install_configurator(host, port, proxy=None):
             sleep(5)
         elif platform.dist()[0].lower() == "centos":
             cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
-                                                                                             port)
+                                                                                        port)
             print cmd2
             run_call(cmd2, shell=True)
             sleep(5)
@@ -397,7 +395,7 @@ def create_configurator_service():
                                 "/etc/init/configurator.conf")
             except shutil.Error as err:
                 print >> sys.stderr, err
-            # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
+                # run_cmd("chmod +x /etc/init/configurator.conf", shell=True)
         else:
             try:
                 shutil.copyfile("/opt/configurator-exporter/init_scripts/configurator.service",
@@ -433,6 +431,38 @@ def create_configurator_service():
     run_cmd("service configurator status", shell=True, print_output=True)
 
 
+def install(collectd=True, fluentd=True, configurator_host="0.0.0.0", configurator_port=8000,
+            http_proxy=None, https_proxy=None):
+    if not collectd and not fluentd:
+        print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
+        sys.exit(128)
+
+    if http_proxy:
+        set_env(http_proxy=http_proxy)
+    if https_proxy:
+        set_env(http_proxy=https_proxy)
+    proxy = https_proxy
+    if not proxy:
+        proxy = http_proxy
+    install_dev_tools()
+    install_pip(proxy)
+
+    if collectd:
+        print "Started installing collectd ..."
+        install_python_packages(proxy)
+        setup_collectd(proxy)
+        add_collectd_plugins(proxy)
+        create_collectd_service()
+    if fluentd:
+        print "started installing fluentd ..."
+        install_fluentd(proxy)
+
+    print "started installing configurator ..."
+    install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
+    # create_configurator_service()
+    sys.exit(0)
+
+
 if __name__ == '__main__':
     """main function"""
     parser = argparse.ArgumentParser()
@@ -444,37 +474,15 @@ if __name__ == '__main__':
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
-    parser.add_argument('--http_proxy',action='store', default="", dest='http_proxy',
+    parser.add_argument('--http_proxy', action='store', default="", dest='http_proxy',
                         help='http proxy for connecting to internet')
     parser.add_argument('--https_proxy', action='store', default="", dest='https_proxy',
                         help='https proxy for connecting to internet')
     args = parser.parse_args()
 
-    if not args.installcollectd and not args.installfluentd:
-        print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
-        sys.exit(128)
-
-    if args.http_proxy:
-        set_env(http_proxy=args.http_proxy)
-    if args.https_proxy:
-        set_env(http_proxy=args.https_proxy)
-    proxy = args.https_proxy
-    if not proxy:
-        proxy = args.http_proxy
-    install_dev_tools()
-    install_pip(proxy)
-
-    if args.installcollectd:
-        print "Started installing collectd ..."
-        install_python_packages(proxy)
-        setup_collectd(proxy)
-        add_collectd_plugins(proxy)
-        create_collectd_service()
-    if args.installfluentd:
-        print "started installing fluentd ..."
-        install_fluentd(proxy)
-
-    print "started installing configurator ..."
-    install_configurator(host=args.host, port=args.port, proxy=proxy)
-    # create_configurator_service()
-    sys.exit(0)
+    install(collectd=args.installcollectd,
+            fluentd=args.installfluentd,
+            configurator_host=args.host,
+            configurator_port=args.port,
+            http_proxy=args.http_proxy,
+            https_proxy=args.https_proxy)
