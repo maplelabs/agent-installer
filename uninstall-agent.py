@@ -76,37 +76,46 @@ def uninstall_collecd():
 
 
 def uninstall_fluentd():
+    print "stopping fluentd ..."
     run_cmd("/etc/init.d/td-agent stop", shell=True, ignore_err=True)
     if platform.dist()[0].lower() == "ubuntu" or platform.dist()[0].lower() == "debian":
-        run_cmd("apt-get remove td-agent", shell=True)
-        run_cmd("apt-get purge td-agent", shell=True)
+        print "removing ubuntu fluentd ..."
+        run_cmd("apt-get remove -y td-agent", shell=True)
+        run_cmd("apt-get purge -y td-agent", shell=True)
     elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
-        run_cmd("yum remove td-agent", shell=True)
+        print "removing redhat fluentd ..."
+        run_cmd("yum remove -y td-agent", shell=True)
     if os.path.exists("/opt/td-agent"):
+        print "removing /opt/td-agent"
         shutil.rmtree("/opt/td-agent")
     if os.path.exists("/var/log/td-agent"):
+        print "removing /var/log/td-agent"
         shutil.rmtree("/var/log/td-agent")
     if os.path.exists("/etc/td-agent"):
+        print "removing /etc/td-agent"
         shutil.rmtree("/etc/td-agent")
+    run_cmd("kill $(ps aux | grep -v grep | grep 'td-agent' | awk '{print $2}')", shell=True, ignore_err=True)
 
 
 def uninstall_configurator():
+    print "kill configurator"
     run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
     if os.path.exists("/opt/configurator-exporter"):
+        print "removing /opt/configurator-exporter"
         shutil.rmtree("/opt/configurator-exporter")
 
 
 def uninstall(removecollectd=True, removefluentd=True, removeconfigurator=True):
     if removecollectd:
-        print "removing collectd ..."
+        print "starting to removing collectd ..."
         uninstall_collecd()
 
     if removefluentd:
-        print "removing fluentd ..."
+        print "starting to removing fluentd ..."
         uninstall_fluentd()
 
     if removeconfigurator:
-        print "removing configurator ..."
+        print "starting to removing configurator ..."
         uninstall_configurator()
 
 
