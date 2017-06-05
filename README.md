@@ -12,7 +12,7 @@ optional arguments:
 ```
 
 ```shell
-uninstaller.py [-h] [-sc] [-sf] [-sce]
+uninstall-agent.py [-h] [-sc] [-sf] [-sce]
 
 optional arguments:
   -h, --help            show this help message and exit
