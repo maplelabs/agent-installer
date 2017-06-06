@@ -49,12 +49,12 @@ def set_env(**kwargs):
 
 def run_cmd(cmd, shell, ignore_err=False, print_output=False):
     """
-    return output and status after runing a shell command 
-    :param cmd: 
-    :param shell: 
-    :param ignore_err: 
-    :param print_output: 
-    :return: 
+    return output and status after runing a shell command
+    :param cmd:
+    :param shell:
+    :param ignore_err:
+    :param print_output:
+    :return:
     """
     try:
         output = subprocess.check_output(cmd, shell=shell)
@@ -72,9 +72,9 @@ def run_cmd(cmd, shell, ignore_err=False, print_output=False):
 def run_call(cmd, shell):
     """
     run a command don't check output
-    :param cmd: 
-    :param shell: 
-    :return: 
+    :param cmd:
+    :param shell:
+    :return:
     """
     try:
         subprocess.call(cmd, shell=shell)
@@ -126,7 +126,7 @@ def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
 def install_dev_tools():
     """
     install development tools and dependencies required to compile collectd
-    :return: 
+    :return:
     """
     if platform.dist()[0].lower() == "ubuntu" or platform.dist()[0].lower() == "debian":
         print "found ubuntu installing development tools and dependencies..."
@@ -193,7 +193,7 @@ def install_pip(proxy=None):
 def install_python_packages(proxy=None):
     """
     install required python packages
-    :return: 
+    :return:
     """
     print "install python packages using pip"
     if proxy:
@@ -207,7 +207,7 @@ def install_python_packages(proxy=None):
 def setup_collectd(proxy=None):
     """
     install a custoum collectd from source
-    :return: 
+    :return:
     """
     # download and extract collectd
     print "downloading collectd..."
@@ -231,8 +231,8 @@ def setup_collectd(proxy=None):
 
 def create_collectd_service():
     """
-    create a service for collectd installed 
-    :return: 
+    create a service for collectd installed
+    :return:
     """
     if platform.dist()[0].lower() == "ubuntu":
         print "found ubuntu ..."
@@ -282,8 +282,8 @@ def create_collectd_service():
 
 def install_fluentd(proxy=None):
     """
-    install fluentd and start the service 
-    :return: 
+    install fluentd and start the service
+    :return:
     """
 
     distro, version, name = platform.dist()
@@ -321,8 +321,8 @@ def install_fluentd(proxy=None):
 
 def add_collectd_plugins(proxy=None):
     """
-    add plugins to collectd installed 
-    :return: 
+    add plugins to collectd installed
+    :return:
     """
     # download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
     clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=proxy)
@@ -353,7 +353,7 @@ def add_collectd_plugins(proxy=None):
 def install_configurator(host, port, proxy=None):
     """
     install and start configurator
-    :return: 
+    :return:
     """
     # kill existing configurator service
 
@@ -459,9 +459,35 @@ def install(collectd=True, fluentd=True, configurator_host="0.0.0.0", configurat
 
     print "started installing configurator ..."
     install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
+    configure_iptables(port_number=args.port)
     # create_configurator_service()
     sys.exit(0)
 
+def get_os():
+    return platform.dist()[0].lower()
+
+
+def remove_iptables_rule(port_number=8000):
+    clean_rule = "iptables -D INPUT -p tcp -m tcp --dport {0} -j ACCEPT".format(port_number)
+    run_cmd(clean_rule, shell=True, ignore_err=True)
+
+
+def configure_iptables(port_number=8000):
+
+    add_rule = "iptables -I INPUT 1 -p tcp -m tcp --dport {0} -j ACCEPT".format(port_number)
+    save_rule = "iptables-save"
+    if get_os() == "ubuntu":
+        restart_iptables = "service ufw restart"
+    elif get_os() == "centos":
+        save_rule =  "iptables-save | sudo tee /etc/sysconfig/iptables"
+        restart_iptables = "service iptables restart"
+    else:
+        restart_iptables = "service iptables restart"
+
+    remove_iptables_rule(port_number)
+    run_cmd(add_rule, shell=True, print_output=True, ignore_err=True)
+    run_cmd(save_rule, shell=True, print_output=True)
+    run_cmd(restart_iptables, shell=True, print_output=True, ignore_err=True)
 
 if __name__ == '__main__':
     """main function"""
