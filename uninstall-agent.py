@@ -96,9 +96,9 @@ def uninstall_fluentd():
     if os.path.exists("/opt/td-agent"):
         print "removing /opt/td-agent"
         shutil.rmtree("/opt/td-agent")
-    if os.path.exists("/var/log/td-agent"):
-        print "removing /var/log/td-agent"
-        shutil.rmtree("/var/log/td-agent")
+    # if os.path.exists("/var/log/td-agent"):
+    #     print "removing /var/log/td-agent"
+    #     shutil.rmtree("/var/log/td-agent")
     if os.path.exists("/etc/td-agent"):
         print "removing /etc/td-agent"
         shutil.rmtree("/etc/td-agent")
