@@ -65,6 +65,10 @@ def run_call(cmd, shell, ignore_err=False):
 
 
 def uninstall_collecd():
+    """
+    uninstall collectd, stops collectd and removes directory
+    :return:
+    """
     run_cmd("service collectd stop", shell=True, ignore_err=True)
     if os.path.exists("/opt/collectd"):
         shutil.rmtree("/opt/collectd")
@@ -76,6 +80,10 @@ def uninstall_collecd():
 
 
 def uninstall_fluentd():
+    """
+    uninstall fluentd, stop service, uninstall using package manages, remove leftover files
+    :return:
+    """
     print "stopping fluentd ..."
     run_cmd("/etc/init.d/td-agent stop", shell=True, ignore_err=True)
     if platform.dist()[0].lower() == "ubuntu" or platform.dist()[0].lower() == "debian":
@@ -98,6 +106,10 @@ def uninstall_fluentd():
 
 
 def uninstall_configurator():
+    """
+    uninstall configurator, kill api_server, remove configurator directory
+    :return:
+    """
     print "kill configurator"
     run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
     if os.path.exists("/opt/configurator-exporter"):
@@ -106,6 +118,13 @@ def uninstall_configurator():
 
 
 def uninstall(removecollectd=True, removefluentd=True, removeconfigurator=True):
+    """
+    uninstall function
+    :param removecollectd:
+    :param removefluentd:
+    :param removeconfigurator:
+    :return:
+    """
     if removecollectd:
         print "starting to removing collectd ..."
         uninstall_collecd()
