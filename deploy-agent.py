@@ -485,9 +485,9 @@ def configure_iptables(port_number=8000):
         restart_iptables = "service iptables restart"
 
     remove_iptables_rule(port_number)
-    run_cmd(add_rule, shell=True, print_output=True, ignore_err=True)
-    run_cmd(save_rule, shell=True, print_output=True, ignore_err=True)
-    run_cmd(restart_iptables, shell=True, print_output=True, ignore_err=True)
+    run_cmd(add_rule, shell=True, ignore_err=True)
+    run_cmd(save_rule, shell=True, ignore_err=True)
+    run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 if __name__ == '__main__':
     """main function"""
