@@ -368,12 +368,12 @@ def install_configurator(host, port, proxy=None):
         print "starting configurator ..."
 
         if platform.dist()[0].lower() == "ubuntu":
-            cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
+            cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
             print cmd2
             run_call(cmd2, shell=True)
             sleep(5)
         elif platform.dist()[0].lower() == "centos":
-            cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
+            cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
                                                                                         port)
             print cmd2
             run_call(cmd2, shell=True)
@@ -486,9 +486,9 @@ def configure_iptables(port_number=8000):
         restart_iptables = "service iptables restart"
 
     remove_iptables_rule(port_number)
-    run_cmd(add_rule, shell=True, print_output=True, ignore_err=True)
-    run_cmd(save_rule, shell=True, print_output=True)
-    run_cmd(restart_iptables, shell=True, print_output=True, ignore_err=True)
+    run_cmd(add_rule, shell=True, ignore_err=True)
+    run_cmd(save_rule, shell=True, ignore_err=True)
+    run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 if __name__ == '__main__':
     """main function"""
