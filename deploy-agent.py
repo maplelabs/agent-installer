@@ -41,6 +41,24 @@ if "check_output" not in dir(subprocess):
     subprocess.check_output = f
 
 
+def _add_proxy_for_curl_in_file(proxy, file_name):
+    cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, file_name)
+    print cmd
+    run_cmd(cmd, shell=True, ignore_err=True)
+
+
+def _add_proxy_for_rpm_in_file(proxy, file_name):
+    proxy_url = str(proxy).replace('http://', '')
+    proxy_url = str(proxy_url).replace('https://', '')
+    proxy_url = proxy_url.split(':')
+    if len(proxy_url) > 1:
+        result = ''.join([i for i in proxy_url[1] if i.isdigit()])
+        cmd = 'sed -i "s|rpm|rpm --httpproxy {0} --httpport {1}|g" {2}'.format(proxy_url[0],
+                                                                               result, file_name)
+        print cmd
+        run_cmd(cmd, shell=True, ignore_err=True)
+
+
 def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
@@ -294,9 +312,10 @@ def install_fluentd(proxy=None):
         # run_cmd("sh /tmp/install-ubuntu-{0}-td-agent2.sh".format(name), shell=True)
         download_file(fluentd_install_url_ubuntu, fluentd_file_name, proxy)
         if proxy:
-            cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
-            print cmd
-            run_cmd(cmd, shell=True, ignore_err=True)
+            # cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
+            # print cmd
+            # run_cmd(cmd, shell=True, ignore_err=True)
+            _add_proxy_for_curl_in_file(proxy, fluentd_file_name)
         run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
     elif distro.lower() == "centos":
@@ -306,9 +325,11 @@ def install_fluentd(proxy=None):
         #
         download_file(fluentd_install_url_centos, fluentd_file_name, proxy)
         if proxy:
-            cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
-            print cmd
-            run_cmd(cmd, shell=True, ignore_err=True)
+            # cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, fluentd_file_name)
+            # print cmd
+            # run_cmd(cmd, shell=True, ignore_err=True)
+            _add_proxy_for_rpm_in_file(proxy, fluentd_file_name)
+            _add_proxy_for_curl_in_file(proxy, fluentd_file_name)
         run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
     print "start fluentd ..."
