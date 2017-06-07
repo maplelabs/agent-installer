@@ -368,12 +368,12 @@ def install_configurator(host, port, proxy=None):
         print "starting configurator ..."
 
         if platform.dist()[0].lower() == "ubuntu":
-            cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
+            cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, host, port)
             print cmd2
             run_call(cmd2, shell=True)
             sleep(5)
         elif platform.dist()[0].lower() == "centos":
-            cmd2 = "nohup python {0}/api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
+            cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
                                                                                         port)
             print cmd2
             run_call(cmd2, shell=True)
