@@ -61,10 +61,10 @@ def run_cmd(cmd, shell, ignore_err=False, print_output=False):
             print output
             return output
     except subprocess.CalledProcessError as error:
-        print >> sys.stderr, "Error: {0}".format(error)
         if not ignore_err:
+            print >> sys.stderr, "ERROR: {0}".format(error)
             sys.exit(1)
-        print "error ignored"
+        print >> sys.stdout, "WARNING: {0}".format(error)
         return
 
 
@@ -457,21 +457,23 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     install_dev_tools()
     install_pip(proxy)
 
+    if configurator:
+        print "started installing configurator ..."
+        install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
+        configure_iptables(port_number=args.port)
+    # create_configurator_service()
+
     if collectd:
         print "Started installing collectd ..."
         install_python_packages(proxy)
         setup_collectd(proxy)
         add_collectd_plugins(proxy)
         create_collectd_service()
+
     if fluentd:
         print "started installing fluentd ..."
         install_fluentd(proxy)
 
-    if configurator:
-        print "started installing configurator ..."
-        install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
-        configure_iptables(port_number=args.port)
-    # create_configurator_service()
     sys.exit(0)
 
 
