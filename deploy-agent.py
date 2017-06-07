@@ -431,7 +431,7 @@ def create_configurator_service():
     run_cmd("service configurator status", shell=True, print_output=True)
 
 
-def install(collectd=True, fluentd=True, configurator_host="0.0.0.0", configurator_port=8000,
+def install(collectd=True, fluentd=True, configurator=True,configurator_host="0.0.0.0", configurator_port=8000,
             http_proxy=None, https_proxy=None):
     if not collectd and not fluentd:
         print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
@@ -457,9 +457,10 @@ def install(collectd=True, fluentd=True, configurator_host="0.0.0.0", configurat
         print "started installing fluentd ..."
         install_fluentd(proxy)
 
-    print "started installing configurator ..."
-    install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
-    configure_iptables(port_number=args.port)
+    if configurator:
+        print "started installing configurator ..."
+        install_configurator(host=configurator_host, port=configurator_port, proxy=proxy)
+        configure_iptables(port_number=args.port)
     # create_configurator_service()
     sys.exit(0)
 
@@ -496,6 +497,8 @@ if __name__ == '__main__':
                         help='skip collectd installation')
     parser.add_argument('-sf', '--skipfluentd', action='store_false', default=True, dest='installfluentd',
                         help='skip fluentd installation')
+    parser.add_argument('-sce', '--skipconfigurator', action='store_false', default=True, dest='installconfigurator',
+                        help='skip configurator installation')
     parser.add_argument('-p', '--port', action='store', default="8000", dest='port',
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
@@ -508,6 +511,7 @@ if __name__ == '__main__':
 
     install(collectd=args.installcollectd,
             fluentd=args.installfluentd,
+            configurator=args.installconfigurator,
             configurator_host=args.host,
             configurator_port=args.port,
             http_proxy=args.http_proxy,
