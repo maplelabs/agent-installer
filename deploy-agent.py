@@ -527,7 +527,7 @@ def configure_iptables(port_number=8000):
     if get_os() == "ubuntu":
         restart_iptables = "service ufw restart"
     elif get_os() == "centos":
-        save_rule = "iptables-save | sudo tee /etc/sysconfig/iptables"
+        save_rule = "iptables-save | sudo tee -a /etc/sysconfig/iptables"
         restart_iptables = "service iptables restart"
     else:
         restart_iptables = "service iptables restart"
