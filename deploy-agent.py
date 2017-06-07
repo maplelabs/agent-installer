@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import urllib
 from time import sleep
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
@@ -374,7 +373,7 @@ def install_configurator(host, port, proxy=None):
             sleep(5)
         elif platform.dist()[0].lower() == "centos":
             cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, host,
-                                                                                        port)
+                                                                                            port)
             print cmd2
             run_call(cmd2, shell=True)
             sleep(5)
@@ -431,8 +430,19 @@ def create_configurator_service():
     run_cmd("service configurator status", shell=True, print_output=True)
 
 
-def install(collectd=True, fluentd=True, configurator=True,configurator_host="0.0.0.0", configurator_port=8000,
+def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0", configurator_port=8000,
             http_proxy=None, https_proxy=None):
+    """
+    use this function to controll installation process
+    :param collectd:
+    :param fluentd:
+    :param configurator:
+    :param configurator_host:
+    :param configurator_port:
+    :param http_proxy:
+    :param https_proxy:
+    :return:
+    """
     if not collectd and not fluentd:
         print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
         sys.exit(128)
@@ -464,23 +474,37 @@ def install(collectd=True, fluentd=True, configurator=True,configurator_host="0.
     # create_configurator_service()
     sys.exit(0)
 
+
 def get_os():
+    """
+    return os name
+    :return:
+    """
     return platform.dist()[0].lower()
 
 
 def remove_iptables_rule(port_number=8000):
+    """
+    clear any previously added iptable rule on port_number
+    :param port_number:
+    :return:
+    """
     clean_rule = "iptables -D INPUT -p tcp -m tcp --dport {0} -j ACCEPT".format(port_number)
     run_cmd(clean_rule, shell=True, ignore_err=True)
 
 
 def configure_iptables(port_number=8000):
-
+    """
+    add rule to accept traffic on configurator port
+    :param port_number
+    :return:
+    """
     add_rule = "iptables -I INPUT 1 -p tcp -m tcp --dport {0} -j ACCEPT".format(port_number)
     save_rule = "iptables-save"
     if get_os() == "ubuntu":
         restart_iptables = "service ufw restart"
     elif get_os() == "centos":
-        save_rule =  "iptables-save | sudo tee /etc/sysconfig/iptables"
+        save_rule = "iptables-save | sudo tee /etc/sysconfig/iptables"
         restart_iptables = "service iptables restart"
     else:
         restart_iptables = "service iptables restart"
@@ -489,6 +513,7 @@ def configure_iptables(port_number=8000):
     run_cmd(add_rule, shell=True, ignore_err=True)
     run_cmd(save_rule, shell=True, ignore_err=True)
     run_cmd(restart_iptables, shell=True, ignore_err=True)
+
 
 if __name__ == '__main__':
     """main function"""
