@@ -551,7 +551,7 @@ def update_hostfile():
         for line in data:
             if IP in line and not line.startswith("#"):
                 if hostname not in line:
-                    line = "{} {}".format(line, hostname)
+                    line = "{0} {1}".format(line, hostname)
                     new_data.append(line)
                 else:
                     new_data.append(line)
@@ -560,7 +560,7 @@ def update_hostfile():
                 new_data.append(line)
         if not found:
             hostname = hostname + '\n'
-            line = "{} {}".format(IP, hostname)
+            line = "{0} {1}".format(IP, hostname)
             new_data.append(line)
         f.close()
 
