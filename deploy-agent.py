@@ -475,6 +475,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     proxy = https_proxy
     if not proxy:
         proxy = http_proxy
+    update_hostfile()
     install_dev_tools()
     install_pip(proxy)
 
@@ -537,6 +538,37 @@ def configure_iptables(port_number=8000):
     run_cmd(save_rule, shell=True, ignore_err=True)
     run_cmd(restart_iptables, shell=True, ignore_err=True)
 
+def update_hostfile():
+    hosts_file = "/etc/hosts"
+    hostname = platform.node()
+    hostname = hostname.strip()
+    IP = "127.0.1.1"
+    try:
+        f = open(hosts_file, "r")
+        data = f.readlines()
+        new_data = []
+        found = False
+        for line in data:
+            if IP in line and not line.startswith("#"):
+                if hostname not in line:
+                    line = "{} {}".format(line, hostname)
+                    new_data.append(line)
+                else:
+                    new_data.append(line)
+                found = True
+            else:
+                new_data.append(line)
+        if not found:
+            hostname = hostname + '\n'
+            line = "{} {}".format(IP, hostname)
+            new_data.append(line)
+        f.close()
+
+        f = open(hosts_file, 'w')
+        f.write(''.join(new_data))
+        f.close()
+    except:
+        print "FAILED to update hostname"
 
 if __name__ == '__main__':
     """main function"""
