@@ -102,6 +102,38 @@ def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
     print command
     run_call(command, shell=True)
 
+def update_hostfile():
+    hosts_file = "/etc/hosts"
+    hostname = platform.node()
+    hostname = hostname.strip()
+    IP = "127.0.1.1"
+    try:
+        f = open(hosts_file, "r")
+        data = f.readlines()
+        new_data = []
+        found = False
+        for line in data:
+            if IP in line and not line.startswith("#"):
+                if hostname not in line:
+                    line = "{} {}".format(line, hostname)
+                    new_data.append(line)
+                else:
+                    new_data.append(line)
+                found = True
+            else:
+                new_data.append(line)
+        if not found:
+            hostname = hostname + '\n'
+            line = "{} {}".format(IP, hostname)
+            new_data.append(line)
+        f.close()
+
+        f = open(hosts_file, 'w')
+        f.write(''.join(new_data))
+        f.close()
+    except:
+        print "FAILED to update hostname"
+
 class DeployAgent:
     def __init__(self, host, port, proxy, retries=None):
         self.host = host
@@ -514,6 +546,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
         proxy = http_proxy
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
+    update_hostfile()
     obj.install_dev_tools()
     obj.install_pip()
 
