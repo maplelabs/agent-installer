@@ -164,6 +164,7 @@ class DeployAgent:
             except subprocess.CalledProcessError as error:
                 if not ignore_err:
                     print >> sys.stderr, "ERROR: {0}".format(error)
+                    sleep(0.05)
                     continue
                 else:
                     print >> sys.stdout, "WARNING: {0}".format(error)
@@ -430,7 +431,7 @@ class DeployAgent:
                 cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host, self.port)
                 print cmd2
                 run_call(cmd2, shell=True)
-                sleep(5)
+                sleep(1)
             elif self.os == "centos":
                 cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, self.host,
                                                                                                 self.port)
