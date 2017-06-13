@@ -149,6 +149,7 @@ def check_open_port(port):
         print >> sys.stderr, "Error: Port {0} already in use".format(port)
         return False
 
+
 class DeployAgent:
     def __init__(self, host, port, proxy, retries=None):
         self.host = host
@@ -424,6 +425,7 @@ class DeployAgent:
     def stop_configurator_process(self):
         self._run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
                       ignore_err=True)
+
     def install_configurator(self):
         """
         install and start configurator
