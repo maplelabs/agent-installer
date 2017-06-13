@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import shutil
+import socket
 import subprocess
 import sys
 import tarfile
@@ -23,6 +24,8 @@ COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
 COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
 
 DEFAULT_RETRIES = 3
+
+DEFAULT_CONFIGURATOR_PORT = 8585
 
 # check output function for python 2.6
 if "check_output" not in dir(subprocess):
@@ -46,7 +49,6 @@ if "check_output" not in dir(subprocess):
 def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
-
 
 
 def run_call(cmd, shell):
@@ -102,6 +104,7 @@ def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
     print command
     run_call(command, shell=True)
 
+
 def update_hostfile():
     hosts_file = "/etc/hosts"
     hostname = platform.node()
@@ -133,6 +136,19 @@ def update_hostfile():
         f.close()
     except:
         print "FAILED to update hostname"
+
+
+def check_open_port(port):
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        tcp.bind(('', int(port)))
+        tcp.close()
+        print "Port {0} is available".format(port)
+        return True
+    except socket.error:
+        print >> sys.stderr, "Error: Port {0} already in use".format(port)
+        return False
+
 
 class DeployAgent:
     def __init__(self, host, port, proxy, retries=None):
@@ -170,6 +186,7 @@ class DeployAgent:
                     print >> sys.stdout, "WARNING: {0}".format(error)
                     return
         sys.exit(1)
+
     def _add_proxy_for_curl_in_file(self, proxy, file_name):
         cmd = 'sed -i "s|curl|curl -x {0}|g" {1}'.format(proxy, file_name)
         print cmd
@@ -208,7 +225,6 @@ class DeployAgent:
             # self._run_cmd(cmd3, shell=True)
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
-
 
     # def install_pip():
     #     """
@@ -252,7 +268,6 @@ class DeployAgent:
         # run_call(cmd, shell=True)
         self._run_cmd("python {0}".format(local_file), shell=True)
 
-
     def install_python_packages(self):
         """
         install required python packages
@@ -266,7 +281,6 @@ class DeployAgent:
             cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako web.py"
         self._run_cmd(cmd2, shell=True)
 
-
     def setup_collectd(self):
         """
         install a custoum collectd from source
@@ -274,7 +288,8 @@ class DeployAgent:
         """
         # download and extract collectd
         print "downloading collectd..."
-        download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE), tarfile_type="r:bz2",
+        download_and_extract_tar(COLLCTD_SOURCE_URL, "/tmp/{0}.tar.bz2".format(COLLCTD_SOURCE_FILE),
+                                 tarfile_type="r:bz2",
                                  proxy=self.proxy)
 
         try:
@@ -290,7 +305,6 @@ class DeployAgent:
                 shutil.copyfile("/tmp/{0}/src/my_types.db".format(COLLCTD_SOURCE_FILE), "/opt/collectd/my_types.db")
             except Exception as err:
                 print err
-
 
     def create_collectd_service(self):
         """
@@ -342,7 +356,6 @@ class DeployAgent:
         self._run_cmd("service collectd start", shell=True, print_output=True)
         self._run_cmd("service collectd status", shell=True, print_output=True)
 
-
     def install_fluentd(self):
         """
         install fluentd and start the service
@@ -353,7 +366,8 @@ class DeployAgent:
         fluentd_file_name = "/tmp/install-fluentd.sh"
         if self.os == "ubuntu":
             print "install fluentd for ubuntu {0} {1}".format(version, name)
-            fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent2.sh".format(name)
+            fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent2.sh".format(
+                name)
             # urllib.urlretrieve(fluentd_install_url_ubuntu.format(name), "/tmp/install-ubuntu-{0}-td-agent2.sh".format(name))
             # self._run_cmd("sh /tmp/install-ubuntu-{0}-td-agent2.sh".format(name), shell=True)
             download_file(fluentd_install_url_ubuntu, fluentd_file_name, self.proxy)
@@ -377,7 +391,6 @@ class DeployAgent:
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
-
 
     def add_collectd_plugins(self):
         """
@@ -409,6 +422,9 @@ class DeployAgent:
 
                 # self._run_cmd("service collectd restart", shell=True)
 
+    def stop_configurator_process(self):
+        self._run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
+                      ignore_err=True)
 
     def install_configurator(self):
         """
@@ -417,7 +433,10 @@ class DeployAgent:
         """
         # kill existing configurator service
 
-        self._run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
+        self.stop_configurator_process()
+        sleep(0.5)
+        if not check_open_port(self.port):
+            sys.exit(98)
         if os.path.isdir(CONFIGURATOR_DIR):
             shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
         print "downloading configurator..."
@@ -428,17 +447,23 @@ class DeployAgent:
             print "starting configurator ..."
 
             if self.os == "ubuntu":
-                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host, self.port)
+                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host,
+                                                                                   self.port)
                 print cmd2
                 run_call(cmd2, shell=True)
                 sleep(1)
             elif self.os == "centos":
-                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR, self.host,
+                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR,
+                                                                                                self.host,
                                                                                                 self.port)
                 print cmd2
                 run_call(cmd2, shell=True)
                 # sleep(5)
-
+            status = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
+                                   shell=True, print_output=True)
+            if not status:
+                print >> sys.stderr, "Error: Configurator-exporter failed to start"
+                sys.exit(128)
 
     def create_configurator_service(self):
         """
@@ -484,7 +509,8 @@ class DeployAgent:
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
 
         print "terminate any old instance of configurator if available"
-        self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True, ignore_err=True)
+        self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
+                      ignore_err=True)
         print "start configurator ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
         self._run_cmd("sudo service configurator start", shell=True, print_output=True)
@@ -521,7 +547,8 @@ class DeployAgent:
         self._run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 
-def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0", configurator_port=8000,
+def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
+            configurator_port=DEFAULT_CONFIGURATOR_PORT,
             http_proxy=None, https_proxy=None, retries=None):
     """
     use this function to controll installation process
@@ -548,6 +575,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     update_hostfile()
+
     obj.install_dev_tools()
     obj.install_pip()
 
@@ -579,8 +607,6 @@ def get_os():
     return platform.dist()[0].lower()
 
 
-
-
 if __name__ == '__main__':
     """main function"""
     parser = argparse.ArgumentParser()
@@ -590,7 +616,7 @@ if __name__ == '__main__':
                         help='skip fluentd installation')
     parser.add_argument('-sce', '--skipconfigurator', action='store_false', default=True, dest='installconfigurator',
                         help='skip configurator installation')
-    parser.add_argument('-p', '--port', action='store', default="8000", dest='port',
+    parser.add_argument('-p', '--port', action='store', default="{0}".format(DEFAULT_CONFIGURATOR_PORT), dest='port',
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
