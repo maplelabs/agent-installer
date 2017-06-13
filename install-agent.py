@@ -3,6 +3,7 @@
 import argparse
 import os
 import platform
+import socket
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,8 @@ COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
 COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
 
 DEFAULT_RETRIES = 3
+
+DEFAULT_CONFIGURATOR_PORT = 8585
 
 # check output function for python 2.6
 if "check_output" not in dir(subprocess):
@@ -438,7 +441,11 @@ class DeployAgent:
                 print cmd2
                 run_call(cmd2, shell=True)
                 # sleep(5)
-
+            status = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
+                          shell=True, print_output=True)
+            if not status:
+                print >> sys.stderr, "Error: Configurator-exporter failed to start"
+                sys.exit(128)
 
     def create_configurator_service(self):
         """
@@ -521,7 +528,8 @@ class DeployAgent:
         self._run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 
-def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0", configurator_port=8000,
+def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
+            configurator_port=DEFAULT_CONFIGURATOR_PORT,
             http_proxy=None, https_proxy=None, retries=None):
     """
     use this function to controll installation process
@@ -545,7 +553,8 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     proxy = https_proxy
     if not proxy:
         proxy = http_proxy
-
+    if not check_open_port(configurator_port):
+        sys.exit(98)
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     update_hostfile()
     obj.install_dev_tools()
@@ -578,6 +587,17 @@ def get_os():
     """
     return platform.dist()[0].lower()
 
+def check_open_port(configurator_port):
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        tcp.bind(('', int(configurator_port)))
+        tcp.close()
+        print "Port {0} is available".format(configurator_port)
+        return True
+    except socket.error:
+        print >> sys.stderr, "Error: Port {0} already in use".format(configurator_port)
+        return False
+
 
 
 
@@ -590,7 +610,7 @@ if __name__ == '__main__':
                         help='skip fluentd installation')
     parser.add_argument('-sce', '--skipconfigurator', action='store_false', default=True, dest='installconfigurator',
                         help='skip configurator installation')
-    parser.add_argument('-p', '--port', action='store', default="8000", dest='port',
+    parser.add_argument('-p', '--port', action='store', default="{0}".format(DEFAULT_CONFIGURATOR_PORT), dest='port',
                         help='port on which configurator will listen')
     parser.add_argument('-ip', '--host', action='store', default="0.0.0.0", dest='host',
                         help='host ip on which configurator will listen')
