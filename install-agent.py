@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -49,6 +50,10 @@ if "check_output" not in dir(subprocess):
 def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
+
+
+def kill_process(pid):
+    os.kill(pid, signal.SIGKILL)
 
 
 def run_call(cmd, shell):
@@ -423,8 +428,10 @@ class DeployAgent:
                 # self._run_cmd("service collectd restart", shell=True)
 
     def stop_configurator_process(self):
-        self._run_cmd("kill $(ps -face | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
-                      ignore_err=True)
+        pid = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
+                            shell=True, print_output=True)
+        if pid:
+            kill_process(pid)
 
     def install_configurator(self):
         """
