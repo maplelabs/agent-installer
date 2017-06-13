@@ -54,7 +54,11 @@ def set_env(**kwargs):
 
 def kill_process(pid):
     if pid:
-        os.kill(int(pid), signal.SIGKILL)
+        print "Kill process ID {0}".format(pid)
+        try:
+            os.kill(int(pid), signal.SIGKILL)
+        except:
+            print "Failed to kill the process with pid {0}".format(pid)
 
 
 def run_call(cmd, shell):
@@ -144,16 +148,18 @@ def update_hostfile():
         print "FAILED to update hostname"
 
 
-def check_open_port(port):
-    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def check_open_port_available(port, address="127.0.0.1"):
+    # Create a TCP socket
+    port = int(port)
+    s = socket.socket()
+    print "Attempting to connect to %s on port %s" % (address, port)
     try:
-        tcp.bind(('', int(port)))
-        tcp.close()
+        s.connect((address, port))
+        print "Port {0} already in use".format(port)
+        return False
+    except socket.error, e:
         print "Port {0} is available".format(port)
         return True
-    except socket.error:
-        print >> sys.stderr, "Error: Port {0} already in use".format(port)
-        return False
 
 
 class DeployAgent:
@@ -428,11 +434,14 @@ class DeployAgent:
 
                 # self._run_cmd("service collectd restart", shell=True)
 
-    def stop_configurator_process(self):
+    def _get_configurator_pid(self):
         pid = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
                             shell=True, print_output=True)
-        if pid:
-            kill_process(pid)
+        return pid
+
+    def stop_configurator_process(self):
+        print "Stopping configurator"
+        kill_process(self._get_configurator_pid())
 
     def install_configurator(self):
         """
@@ -451,7 +460,7 @@ class DeployAgent:
         print "setup configurator..."
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
-            if not check_open_port(self.port):
+            if not check_open_port_available(port=self.port):
                 sys.exit(98)
 
             if self.os == "ubuntu":
@@ -467,8 +476,7 @@ class DeployAgent:
                 print cmd2
                 run_call(cmd2, shell=True)
                 # sleep(5)
-            status = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
-                                   shell=True, print_output=True)
+            status = self._get_configurator_pid()
             if not status:
                 print >> sys.stderr, "Error: Configurator-exporter failed to start"
                 sys.exit(128)
@@ -583,7 +591,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     update_hostfile()
-
+    obj.stop_configurator_process()
     obj.install_dev_tools()
     obj.install_pip()
 
