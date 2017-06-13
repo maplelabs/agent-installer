@@ -434,9 +434,7 @@ class DeployAgent:
         # kill existing configurator service
 
         self.stop_configurator_process()
-        sleep(0.5)
-        if not check_open_port(self.port):
-            sys.exit(98)
+        # sleep(0.5)
         if os.path.isdir(CONFIGURATOR_DIR):
             shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
         print "downloading configurator..."
@@ -445,6 +443,8 @@ class DeployAgent:
         print "setup configurator..."
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
+            if not check_open_port(self.port):
+                sys.exit(98)
 
             if self.os == "ubuntu":
                 cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host,
