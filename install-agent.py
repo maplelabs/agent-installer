@@ -53,7 +53,8 @@ def set_env(**kwargs):
 
 
 def kill_process(pid):
-    os.kill(pid, signal.SIGKILL)
+    if pid:
+        os.kill(int(pid), signal.SIGKILL)
 
 
 def run_call(cmd, shell):
