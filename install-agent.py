@@ -138,6 +138,17 @@ def update_hostfile():
         print "FAILED to update hostname"
 
 
+def check_open_port(port):
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        tcp.bind(('', int(port)))
+        tcp.close()
+        print "Port {0} is available".format(port)
+        return True
+    except socket.error:
+        print >> sys.stderr, "Error: Port {0} already in use".format(port)
+        return False
+
 class DeployAgent:
     def __init__(self, host, port, proxy, retries=None):
         self.host = host
@@ -420,7 +431,10 @@ class DeployAgent:
         """
         # kill existing configurator service
 
-        # self.stop_configurator_process()
+        self.stop_configurator_process()
+        sleep(0.5)
+        if not check_open_port(self.port):
+            sys.exit(98)
         if os.path.isdir(CONFIGURATOR_DIR):
             shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
         print "downloading configurator..."
@@ -530,17 +544,6 @@ class DeployAgent:
         self._run_cmd(save_rule, shell=True, ignore_err=True)
         self._run_cmd(restart_iptables, shell=True, ignore_err=True)
 
-    def check_open_port(self):
-        tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            tcp.bind(('', int(self.port)))
-            tcp.close()
-            print "Port {0} is available".format(self.port)
-            return True
-        except socket.error:
-            print >> sys.stderr, "Error: Port {0} already in use".format(self.port)
-            return False
-
 
 def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
             configurator_port=DEFAULT_CONFIGURATOR_PORT,
@@ -570,9 +573,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     update_hostfile()
-    obj.stop_configurator_process()
-    if not obj.check_open_port():
-        sys.exit(98)
+
     obj.install_dev_tools()
     obj.install_pip()
 
