@@ -1,6 +1,6 @@
 # using scripts  
 ```shell
-usage: deploy-agent.py [-h] [-sc] [-sf] [-sce] [-p PORT] [-ip HOST]
+usage: install-agent.py [-h] [-sc] [-sf] [-sce] [-p PORT] [-ip HOST]
                        [--http_proxy HTTP_PROXY] [--https_proxy HTTPS_PROXY]
 
 optional arguments:
