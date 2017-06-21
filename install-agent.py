@@ -594,6 +594,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     obj.stop_configurator_process()
     obj.install_dev_tools()
     obj.install_pip()
+    obj.install_python_packages()
 
     if configurator:
         print "started installing configurator ..."
@@ -603,7 +604,6 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     if collectd:
         print "Started installing collectd ..."
-        obj.install_python_packages()
         obj.setup_collectd()
         obj.add_collectd_plugins()
         obj.create_collectd_service()
