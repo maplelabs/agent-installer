@@ -287,10 +287,11 @@ class DeployAgent:
         """
         print "install python packages using pip"
         if self.proxy:
-            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml " \
+            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml requests" \
                    "mako web.py --proxy {0}".format(self.proxy)
         else:
-            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako web.py"
+            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako " \
+                   "requests web.py"
         self._run_cmd(cmd2, shell=True)
 
     def setup_collectd(self):
