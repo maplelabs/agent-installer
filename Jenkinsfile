@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('deploy') {
       steps {
-        sh 'echo pwd'
+        sh 'pwd'
       }
     }
   }
