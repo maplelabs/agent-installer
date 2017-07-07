@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('deploy') {
       steps {
-        sh 'ls -l'
+        sh 'python install-agent.py'
       }
     }
   }
