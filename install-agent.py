@@ -222,7 +222,8 @@ class DeployAgent:
         """
         if self.os == "ubuntu" or self.os == "debian":
             print "found ubuntu installing development tools and dependencies..."
-            cmd1 = "apt-get update -y"
+            cmd1 = "DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' " \
+                   "-o Dpkg::Options::='--force-confold' update"
             cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
                    "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
             self._run_cmd(cmd1, shell=True)
