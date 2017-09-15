@@ -400,6 +400,9 @@ class DeployAgent:
                 self._add_proxy_for_rpm_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
+        cmd = "usermod -a -G td-agent adm"
+        print "Adding user td-agent to the group adm"
+        self._run_cmd(cmd, ignore_err=True, shell=True)
         print "start fluentd ..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
