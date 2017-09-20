@@ -389,6 +389,7 @@ class DeployAgent:
                 self._add_proxy_for_curl_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
             self._run_cmd("echo '*.* @127.0.0.1:5140' >> /etc/rsyslog.conf", shell=True, ignore_err=True)
+            self._run_cmd("service syslog restart", shell=True, ignore_err=True)
 
         elif self.os == "centos":
             print "install fluentd for centos/redhat {0} {1}".format(version, name)
@@ -401,7 +402,7 @@ class DeployAgent:
                 self._add_proxy_for_rpm_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
-        cmd = "usermod -a -G td-agent adm"
+        cmd = "usermod -a -G adm td-agent"
         print "Adding user td-agent to the group adm"
         self._run_cmd(cmd, ignore_err=True, shell=True)
         print "start fluentd ..."
