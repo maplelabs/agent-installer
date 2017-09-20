@@ -405,6 +405,8 @@ class DeployAgent:
         self._run_cmd(cmd, ignore_err=True, shell=True)
         print "start fluentd ..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
+        self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-multi-format-parser", shell=True)
+        self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
