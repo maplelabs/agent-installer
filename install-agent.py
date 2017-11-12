@@ -603,12 +603,6 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     obj.install_pip()
     obj.install_python_packages()
 
-    if configurator:
-        print "started installing configurator ..."
-        obj.install_configurator()
-        obj.configure_iptables()
-    # create_configurator_service()
-
     if collectd:
         print "Started installing collectd ..."
         obj.setup_collectd()
@@ -618,6 +612,12 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     if fluentd:
         print "started installing fluentd ..."
         obj.install_fluentd()
+
+    if configurator:
+        print "started installing configurator ..."
+        obj.install_configurator()
+        obj.configure_iptables()
+    # create_configurator_service()
 
     sys.exit(0)
 
