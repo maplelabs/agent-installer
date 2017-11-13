@@ -367,8 +367,17 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
         print "start collectd ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-        self._run_cmd("service collectd start", shell=True, print_output=True)
-        self._run_cmd("service collectd status", shell=True, print_output=True)
+        if self.os in ["ubuntu", "centos"]:
+            self._run_cmd("service collectd start", shell=True, print_output=True)
+            self._run_cmd("service collectd status", shell=True, print_output=True)
+        else:
+            bin_file = "/opt/collectd/sbin/collectd"
+            config_file = "/opt/collectd/etc/collectd.conf"
+            pid_file = "/opt/collectd/var/run/collectd.pid"
+            cmd = "nohup {0} -C {1} -P {2} &> /dev/null &".format(bin_file, config_file, pid_file)
+            print cmd
+            run_call(cmd, shell=True)
+        #/ opt / collectd / sbin / collectd - C / opt / collectd / etc / collectd.conf - P / opt / collectd / var / run / collectd.pid
 
     def install_fluentd(self):
         """
@@ -389,7 +398,7 @@ class DeployAgent:
                 self._add_proxy_for_curl_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
-        elif self.os == "centos":
+        elif self.os in ["centos", "redhat"]:
             print "install fluentd for centos/redhat {0} {1}".format(version, name)
             fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh"
             # urllib.urlretrieve(fluentd_install_url_centos, "/tmp/install-redhat-td-agent2.sh")
@@ -403,12 +412,18 @@ class DeployAgent:
         cmd = "usermod -a -G adm td-agent"
         print "Adding user td-agent to the group adm"
         self._run_cmd(cmd, ignore_err=True, shell=True)
-        print "start fluentd ..."
+        print "Install fluentd gems..."
+        print "Install fluentd fluent-plugin-elasticsearch..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
+        print "Install fluentd fluent-plugin-multi-format-parser..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-multi-format-parser", shell=True)
+        print "Install fluentd fluent-plugin-mysqlslowquery..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
+        print "Install fluentd fluent-plugin-kafka..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
+        print "start fluentd ..."
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
+        print "Get fluentd status..."
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
 
     def add_collectd_plugins(self):
@@ -497,7 +512,7 @@ class DeployAgent:
                 print cmd2
                 run_call(cmd2, shell=True)
                 sleep(1)
-            elif self.os == "centos":
+            elif self.os in ["centos", "redhat"]:
                 cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR,
                                                                                                 self.host,
                                                                                                 self.port)
@@ -579,7 +594,7 @@ class DeployAgent:
         save_rule = "iptables-save"
         if self.os == "ubuntu":
             restart_iptables = "service ufw restart"
-        elif self.os == "centos":
+        elif self.os in ["centos", "redhat"]:
             save_rule = "iptables-save | sudo tee /etc/sysconfig/iptables"
             restart_iptables = "service iptables restart"
         else:
