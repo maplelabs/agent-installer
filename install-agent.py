@@ -440,6 +440,27 @@ class DeployAgent:
                 print err
 
                 # self._run_cmd("service collectd restart", shell=True)
+    def _check_configurator_status(self, port=DEFAULT_CONFIGURATOR_PORT):
+        try:
+            import urllib
+            url = "http://127.0.0.1:%s" % (port)
+            resp = urllib.urlopen(url)
+            return resp.code
+        except Exception:
+            return 404
+
+    def verify_configurator(self):
+        print "verify configurator"
+        code = self._check_configurator_status(self.port)
+        count = 0
+        while code != 200:
+            if count == 6:
+                print >> sys.stderr, "Error: Configurator-exporter not running"
+                sys.exit(128)
+            count += 1
+            sleep(5)
+            code = self._check_configurator_status(self.port)
+        print "verified"
 
     def _get_configurator_pid(self):
         pid = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
@@ -603,12 +624,6 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     obj.install_pip()
     obj.install_python_packages()
 
-    if configurator:
-        print "started installing configurator ..."
-        obj.install_configurator()
-        obj.configure_iptables()
-    # create_configurator_service()
-    
     if collectd:
         print "Started installing collectd ..."
         obj.setup_collectd()
@@ -618,6 +633,14 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     if fluentd:
         print "started installing fluentd ..."
         obj.install_fluentd()
+
+    if configurator:
+        print "started installing configurator ..."
+        obj.install_configurator()
+        obj.configure_iptables()
+        obj.verify_configurator()
+
+    # create_configurator_service()
 
     sys.exit(0)
 
