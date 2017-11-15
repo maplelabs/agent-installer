@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 from time import sleep
+import zipfile
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
@@ -22,6 +23,8 @@ CONFIGURATOR_SOURCE_REPO = "https://github.com/maplelabs/configurator-exporter"
 CONFIGURATOR_DIR = "/opt/configurator-exporter"
 # collectd_plugins_source_url = "http://10.81.1.134:8000/plugins.tar.gz"
 COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
+COLLECTD_PLUGINS_ZIP = "https://github.com/maplelabs/collectd-plugins/archive/master.zip"
+CONFIGURATOR_ZIP = "https://github.com/maplelabs/configurator-exporter/archive/master.zip"
 COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
 
 COLLECTD_X86_64 = "https://github.com/maplelabs/collectd/releases/download/collectd-custom-5.6.1/collectd_x86_64.tar.bz2"
@@ -107,6 +110,10 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
     except tarfile.TarError as err:
         print >> sys.stderr, err
 
+def unzip_file(zip_file, target_dir="/tmp"):
+    zip_ref = zipfile.ZipFile(zip_file, 'r')
+    zip_ref.extractall(target_dir)
+    zip_ref.close()
 
 def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
     if proxy:
@@ -228,7 +235,7 @@ class DeployAgent:
                    "-o Dpkg::Options::='--force-confold' update"
             # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
             #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
-            cmd2 = "apt-get install -y pkg-config curl python-dev sudo git wget libmysqlclient-dev libvirt-dev"
+            cmd2 = "apt-get install -y pkg-config curl python-dev sudo wget libmysqlclient-dev libvirt-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
@@ -237,7 +244,7 @@ class DeployAgent:
             # cmd1 = "yum groupinstall -y 'Development Tools'"
             # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
             # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
-            cmd1 = "yum install -y gcc gcc-c++ curl python-devel libvirt-devel sudo mysql-devel git wget bzip2"
+            cmd1 = "yum install -y gcc gcc-c++ curl python-devel libvirt-devel sudo mysql-devel wget bzip2"
             # cmd3 = "yum update -y"
 
             # self._run_cmd(cmd3, shell=True)
@@ -461,11 +468,13 @@ class DeployAgent:
         :return:
         """
         # download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
-        clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=self.proxy)
-        # try:
-        #     shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
-        # except shutil.Error as err:
-        #     print >> sys.stderr, err
+        download_file(COLLECTD_PLUGINS_ZIP, local_path="/tmp/collectd-plugins.zip", proxy=self.proxy)
+        unzip_file("/tmp/collectd-plugins.zip")
+        # clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=self.proxy)
+        try:
+            shutil.copytree("/tmp/collectd-plugins-master", "/opt/collectd/plugins")
+        except shutil.Error as err:
+            print >> sys.stderr, err
         if os.path.isfile("{0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)):
             if self.proxy:
                 cmd = "pip install -r {0}/requirements.txt --proxy {1}".format(COLLECTD_PLUGINS_DIR, self.proxy)
@@ -528,7 +537,13 @@ class DeployAgent:
             shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
         print "downloading configurator..."
         # download_and_extract_tar(configurator_source_url, "/tmp/configurator.tar.gz", extract_dir="/opt")
-        clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR, proxy=self.proxy)
+        # clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR, proxy=self.proxy)
+        download_file(CONFIGURATOR_ZIP, local_path="/tmp/configurator.zip", proxy=self.proxy)
+        unzip_file("/tmp/configurator.zip")
+        try:
+            shutil.copytree("/tmp/configurator-exporter-master", "/opt/configurator-exporter")
+        except shutil.Error as err:
+            print >> sys.stderr, err
         print "setup configurator..."
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
