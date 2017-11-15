@@ -235,7 +235,7 @@ class DeployAgent:
                    "-o Dpkg::Options::='--force-confold' update"
             # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
             #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
-            cmd2 = "apt-get install -y pkg-config curl python-dev sudo wget libmysqlclient-dev libvirt-dev"
+            cmd2 = "apt-get install -y curl python-dev sudo wget libmysqlclient-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
@@ -244,7 +244,7 @@ class DeployAgent:
             # cmd1 = "yum groupinstall -y 'Development Tools'"
             # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
             # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
-            cmd1 = "yum install -y gcc gcc-c++ curl python-devel libvirt-devel sudo mysql-devel wget bzip2"
+            cmd1 = "yum install -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2"
             # cmd3 = "yum update -y"
 
             # self._run_cmd(cmd3, shell=True)
@@ -664,6 +664,9 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     :param https_proxy:
     :return:
     """
+
+    import time
+    begin = time.time()
     if not collectd and not fluentd:
         print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
         sys.exit(128)
@@ -678,30 +681,48 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     update_hostfile()
+    start = time.time()
     obj.stop_configurator_process()
     obj.install_dev_tools()
     obj.install_pip()
     obj.install_python_packages()
+    print "=================package setup time in seconds============"
+    print time.time() - start
+    print "===================================="
 
     if collectd:
+        start = time.time()
         print "Started installing collectd ..."
         obj.setup_collectd()
         obj.add_collectd_plugins()
         obj.start_collectd()
+        print "=================collectd setup time in seconds============"
+        print time.time() - start
+        print "===================================="
         # obj.create_collectd_service()
 
     if fluentd:
+        start = time.time()
         print "started installing fluentd ..."
         obj.install_fluentd()
+        print "=================fluentd setup time in seconds============"
+        print time.time() - start
+        print "===================================="
 
     if configurator:
+        start = time.time()
         print "started installing configurator ..."
         obj.install_configurator()
         obj.configure_iptables()
         obj.verify_configurator()
+        print "=================configurator setup time in seconds============"
+        print time.time() - start
+        print "===================================="
 
     # create_configurator_service()
-
+    print "=================total time in seconds============"
+    print time.time() - begin
+    print "===================================="
     sys.exit(0)
 
 
