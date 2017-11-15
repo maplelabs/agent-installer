@@ -24,6 +24,8 @@ CONFIGURATOR_DIR = "/opt/configurator-exporter"
 COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
 COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
 
+COLLECTD_X86_64 = "https://github.com/maplelabs/collectd/releases/download/collectd-custom-5.6.1/collectd_x86_64.tar.bz2"
+
 DEFAULT_RETRIES = 3
 
 DEFAULT_CONFIGURATOR_PORT = 8585
@@ -224,20 +226,23 @@ class DeployAgent:
             print "found ubuntu installing development tools and dependencies..."
             cmd1 = "DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' " \
                    "-o Dpkg::Options::='--force-confold' update"
-            cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-                   "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+            # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
+            #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+            cmd2 = "apt-get install -y pkg-config curl python-dev sudo git wget libmysqlclient-dev libvirt-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
         elif self.os == "centos" or self.os == "redhat":
             print "found centos/redhat installing developments tools and dependencies..."
             # cmd1 = "yum groupinstall -y 'Development Tools'"
-            cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
-            cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
-            cmd3 = "yum update -y"
+            # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
+            # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
+            cmd1 = "yum install -y gcc gcc-c++ curl python-devel libvirt-devel sudo mysql-devel git wget bzip2"
+            # cmd3 = "yum update -y"
+
             # self._run_cmd(cmd3, shell=True)
             self._run_cmd(cmd1, shell=True)
-            self._run_cmd(cmd2, shell=True)
+            # self._run_cmd(cmd2, shell=True)
 
     # def install_pip():
     #     """
@@ -288,14 +293,14 @@ class DeployAgent:
         """
         print "install python packages using pip"
         if self.proxy:
-            cmd2 = "pip install --upgrade setuptools 'libvirt-python>=2.0.0' collectd psutil argparse pyyaml requests" \
+            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml requests" \
                    "mako web.py --proxy {0}".format(self.proxy)
         else:
-            cmd2 = "pip install --upgrade setuptools 'libvirt-python>=2.0.0' collectd psutil argparse pyyaml mako " \
+            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml mako " \
                    "requests web.py"
         self._run_cmd(cmd2, shell=True)
 
-    def setup_collectd(self):
+    def build_collectd(self):
         """
         install a custoum collectd from source
         :return:
@@ -319,6 +324,23 @@ class DeployAgent:
                 shutil.copyfile("/tmp/{0}/src/my_types.db".format(COLLCTD_SOURCE_FILE), "/opt/collectd/my_types.db")
             except Exception as err:
                 print err
+
+    def setup_collectd(self):
+        """
+        install a custoum collectd from source
+        :return:
+        """
+        # download and extract collectd
+        try:
+            shutil.rmtree("/opt/collectd", ignore_errors=True)
+        except shutil.Error:
+            pass
+        print "downloading collectd..."
+        if platform.machine() == "x86_64":
+            download_and_extract_tar(tarfile_url=COLLECTD_X86_64, local_file_name="/tmp/collectd-prebuilt.tar",
+                                     proxy=self.proxy, extract_dir="/opt/", tarfile_type="r:bz2")
+        else:
+            self.build_collectd()
 
     def create_collectd_service(self):
         """
@@ -378,7 +400,14 @@ class DeployAgent:
             print cmd
             run_call(cmd, shell=True)
         #/ opt / collectd / sbin / collectd - C / opt / collectd / etc / collectd.conf - P / opt / collectd / var / run / collectd.pid
-
+    def start_collectd(self):
+        print "terminate any old instance of collectd if available"
+        self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
+        bin_file = "/opt/collectd/sbin/collectd"
+        config_file = "/opt/collectd/etc/collectd.conf"
+        pid_file = "/opt/collectd/var/run/collectd.pid"
+        cmd = "{0} -C {1} -P {2}".format(bin_file, config_file, pid_file)
+        run_call(cmd, shell=True)
     def install_fluentd(self):
         """
         install fluentd and start the service
@@ -643,7 +672,8 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
         print "Started installing collectd ..."
         obj.setup_collectd()
         obj.add_collectd_plugins()
-        obj.create_collectd_service()
+        obj.start_collectd()
+        # obj.create_collectd_service()
 
     if fluentd:
         print "started installing fluentd ..."
