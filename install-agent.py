@@ -235,7 +235,7 @@ class DeployAgent:
                    "-o Dpkg::Options::='--force-confold' update"
             # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
             #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
-            cmd2 = "apt-get install -y curl python-dev sudo wget libmysqlclient-dev"
+            cmd2 = "apt-get install -y gcc curl python-dev sudo wget libmysqlclient-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
