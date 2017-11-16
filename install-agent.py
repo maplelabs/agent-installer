@@ -563,10 +563,10 @@ class DeployAgent:
                 print cmd2
                 run_call(cmd2, shell=True)
                 # sleep(5)
-            status = self._get_configurator_pid()
-            if not status:
-                print >> sys.stderr, "Error: Configurator-exporter failed to start"
-                sys.exit(128)
+            # status = self._get_configurator_pid()
+            # if not status:
+            #     print >> sys.stderr, "Error: Configurator-exporter failed to start"
+            #     sys.exit(128)
 
     def create_configurator_service(self):
         """
