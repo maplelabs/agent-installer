@@ -650,7 +650,7 @@ class DeployAgent:
         self._run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 
-def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
+def install(collectd=True, setup=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
             configurator_port=DEFAULT_CONFIGURATOR_PORT,
             http_proxy=None, https_proxy=None, retries=None):
     """
@@ -667,9 +667,9 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     import time
     begin = time.time()
-    if not collectd and not fluentd:
-        print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
-        sys.exit(128)
+    # if not collectd and not fluentd and not configurator:
+    #     print >> sys.stderr, "you cannot skip all collectd and fluentd installation"
+    #     sys.exit(128)
 
     if http_proxy:
         set_env(http_proxy=http_proxy)
@@ -680,15 +680,15 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
         proxy = http_proxy
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
-    update_hostfile()
-    start = time.time()
-    obj.stop_configurator_process()
-    obj.install_dev_tools()
-    obj.install_pip()
-    obj.install_python_packages()
-    print "=================package setup time in seconds============"
-    print time.time() - start
-    print "===================================="
+    if setup:
+        start = time.time()
+        update_hostfile()
+        obj.install_dev_tools()
+        obj.install_pip()
+        obj.install_python_packages()
+        print "=================package setup time in seconds============"
+        print time.time() - start
+        print "===================================="
 
     if collectd:
         start = time.time()
@@ -711,6 +711,7 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
 
     if configurator:
         start = time.time()
+        obj.stop_configurator_process()
         print "started installing configurator ..."
         obj.install_configurator()
         obj.configure_iptables()
@@ -737,6 +738,8 @@ def get_os():
 if __name__ == '__main__':
     """main function"""
     parser = argparse.ArgumentParser()
+    parser.add_argument('-ss', '--skipsetup', action='store_false', default=True, dest='initialsetup',
+                        help='skip collectd installation')
     parser.add_argument('-sc', '--skipcollectd', action='store_false', default=True, dest='installcollectd',
                         help='skip collectd installation')
     parser.add_argument('-sf', '--skipfluentd', action='store_false', default=True, dest='installfluentd',
@@ -756,6 +759,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     install(collectd=args.installcollectd,
+            setup=args.initialsetup,
             fluentd=args.installfluentd,
             configurator=args.installconfigurator,
             configurator_host=args.host,
