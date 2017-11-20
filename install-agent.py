@@ -453,8 +453,8 @@ class DeployAgent:
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
         print "Install fluentd fluent-plugin-multi-format-parser..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-multi-format-parser", shell=True)
-        print "Install fluentd fluent-plugin-mysqlslowquery..."
-        self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
+        # print "Install fluentd fluent-plugin-mysqlslowquery..."
+        # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
         # print "Install fluentd fluent-plugin-kafka..."
         # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
         print "start fluentd ..."
