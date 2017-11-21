@@ -412,8 +412,8 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
         bin_file = "/opt/collectd/sbin/collectd"
         config_file = "/opt/collectd/etc/collectd.conf"
-        pid_file = "/opt/collectd/var/run/collectd.pid"
-        cmd = "{0} -C {1} -P {2}".format(bin_file, config_file, pid_file)
+        cmd = "{0} -C {1}".format(bin_file, config_file)
+        print cmd
         run_call(cmd, shell=True)
     def install_fluentd(self):
         """
