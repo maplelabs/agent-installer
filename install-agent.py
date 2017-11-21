@@ -415,6 +415,11 @@ class DeployAgent:
         cmd = "{0} -C {1}".format(bin_file, config_file)
         print cmd
         run_call(cmd, shell=True)
+        sleep(1)
+        pid = self._get_collectd_pid()
+        if not pid:
+            run_call(cmd, shell=True)
+            sleep(1)
     def install_fluentd(self):
         """
         install fluentd and start the service
@@ -520,6 +525,10 @@ class DeployAgent:
                             shell=True, print_output=True)
         return pid
 
+    def _get_collectd_pid(self):
+        pid = self._run_cmd("ps -face | grep -v grep | grep 'collectd' | awk '{print $2}'",
+                            shell=True, print_output=True)
+        return pid
     def stop_configurator_process(self):
         print "Stopping configurator"
         kill_process(self._get_configurator_pid())
