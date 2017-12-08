@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 from time import sleep
+import zipfile
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
@@ -22,7 +23,11 @@ CONFIGURATOR_SOURCE_REPO = "https://github.com/maplelabs/configurator-exporter"
 CONFIGURATOR_DIR = "/opt/configurator-exporter"
 # collectd_plugins_source_url = "http://10.81.1.134:8000/plugins.tar.gz"
 COLLECTD_PLUGINS_REPO = "https://github.com/maplelabs/collectd-plugins"
+COLLECTD_PLUGINS_ZIP = "https://github.com/maplelabs/collectd-plugins/archive/master.zip"
+CONFIGURATOR_ZIP = "https://github.com/maplelabs/configurator-exporter/archive/master.zip"
 COLLECTD_PLUGINS_DIR = "/opt/collectd/plugins"
+
+COLLECTD_X86_64 = "https://github.com/maplelabs/collectd/releases/download/collectd-custom-5.6.1/collectd_x86_64.tar.bz2"
 
 DEFAULT_RETRIES = 3
 
@@ -105,6 +110,10 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
     except tarfile.TarError as err:
         print >> sys.stderr, err
 
+def unzip_file(zip_file, target_dir="/tmp"):
+    zip_ref = zipfile.ZipFile(zip_file, 'r')
+    zip_ref.extractall(target_dir)
+    zip_ref.close()
 
 def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
     if proxy:
@@ -224,20 +233,23 @@ class DeployAgent:
             print "found ubuntu installing development tools and dependencies..."
             cmd1 = "DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' " \
                    "-o Dpkg::Options::='--force-confold' update"
-            cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
-                   "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+            # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
+            #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
+            cmd2 = "apt-get install -y gcc make curl python-dev sudo wget libmysqlclient-dev libcurl4-openssl-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
         elif self.os == "centos" or self.os == "redhat":
             print "found centos/redhat installing developments tools and dependencies..."
             # cmd1 = "yum groupinstall -y 'Development Tools'"
-            cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
-            cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
-            cmd3 = "yum update -y"
+            # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
+            # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
+            cmd1 = "yum install -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2"
+            # cmd3 = "yum update -y"
+
             # self._run_cmd(cmd3, shell=True)
             self._run_cmd(cmd1, shell=True)
-            self._run_cmd(cmd2, shell=True)
+            # self._run_cmd(cmd2, shell=True)
 
     # def install_pip():
     #     """
@@ -288,14 +300,14 @@ class DeployAgent:
         """
         print "install python packages using pip"
         if self.proxy:
-            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml requests" \
+            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml requests" \
                    "mako web.py --proxy {0}".format(self.proxy)
         else:
-            cmd2 = "pip install --upgrade setuptools libvirt-python==2.0.0 collectd psutil argparse pyyaml mako " \
+            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml mako " \
                    "requests web.py"
         self._run_cmd(cmd2, shell=True)
 
-    def setup_collectd(self):
+    def build_collectd(self):
         """
         install a custoum collectd from source
         :return:
@@ -319,6 +331,23 @@ class DeployAgent:
                 shutil.copyfile("/tmp/{0}/src/my_types.db".format(COLLCTD_SOURCE_FILE), "/opt/collectd/my_types.db")
             except Exception as err:
                 print err
+
+    def setup_collectd(self):
+        """
+        install a custoum collectd from source
+        :return:
+        """
+        # download and extract collectd
+        try:
+            shutil.rmtree("/opt/collectd", ignore_errors=True)
+        except shutil.Error:
+            pass
+        print "downloading collectd..."
+        if platform.machine() == "x86_64":
+            download_and_extract_tar(tarfile_url=COLLECTD_X86_64, local_file_name="/tmp/collectd-prebuilt.tar",
+                                     proxy=self.proxy, extract_dir="/opt/", tarfile_type="r:bz2")
+        else:
+            self.build_collectd()
 
     def create_collectd_service(self):
         """
@@ -367,9 +396,30 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
         print "start collectd ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-        self._run_cmd("service collectd start", shell=True, print_output=True)
-        self._run_cmd("service collectd status", shell=True, print_output=True)
-
+        if self.os in ["ubuntu", "centos"]:
+            self._run_cmd("service collectd start", shell=True, print_output=True)
+            self._run_cmd("service collectd status", shell=True, print_output=True)
+        else:
+            bin_file = "/opt/collectd/sbin/collectd"
+            config_file = "/opt/collectd/etc/collectd.conf"
+            pid_file = "/opt/collectd/var/run/collectd.pid"
+            cmd = "nohup {0} -C {1} -P {2} &> /dev/null &".format(bin_file, config_file, pid_file)
+            print cmd
+            run_call(cmd, shell=True)
+        #/ opt / collectd / sbin / collectd - C / opt / collectd / etc / collectd.conf - P / opt / collectd / var / run / collectd.pid
+    def start_collectd(self):
+        print "terminate any old instance of collectd if available"
+        self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
+        bin_file = "/opt/collectd/sbin/collectd"
+        config_file = "/opt/collectd/etc/collectd.conf"
+        cmd = "{0} -C {1}".format(bin_file, config_file)
+        print cmd
+        run_call(cmd, shell=True)
+        sleep(1)
+        pid = self._get_collectd_pid()
+        if not pid:
+            run_call(cmd, shell=True)
+            sleep(1)
     def install_fluentd(self):
         """
         install fluentd and start the service
@@ -391,7 +441,7 @@ class DeployAgent:
             self._run_cmd("echo '*.* @127.0.0.1:42186' >> /etc/rsyslog.conf", shell=True, ignore_err=True)
 
 
-        elif self.os == "centos":
+        elif self.os in ["centos", "redhat"]:
             print "install fluentd for centos/redhat {0} {1}".format(version, name)
             fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh"
             # urllib.urlretrieve(fluentd_install_url_centos, "/tmp/install-redhat-td-agent2.sh")
@@ -402,13 +452,21 @@ class DeployAgent:
                 self._add_proxy_for_rpm_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
 
-        cmd = "usermod -a -G td-agent adm"
+        cmd = "usermod -a -G adm td-agent"
         print "Adding user td-agent to the group adm"
         self._run_cmd(cmd, ignore_err=True, shell=True)
-        print "start fluentd ..."
+        print "Install fluentd gems..."
+        print "Install fluentd fluent-plugin-elasticsearch..."
         self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-elasticsearch", shell=True)
-        self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
+        print "Install fluentd fluent-plugin-multi-format-parser..."
+        self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-multi-format-parser", shell=True)
+        # print "Install fluentd fluent-plugin-mysqlslowquery..."
+        # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
+        # print "Install fluentd fluent-plugin-kafka..."
+        # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
+        print "start fluentd ..."
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
+        print "Get fluentd status..."
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
 
     def add_collectd_plugins(self):
@@ -417,11 +475,13 @@ class DeployAgent:
         :return:
         """
         # download_and_extract_tar(collectd_plugins_source_url, "/tmp/plugins.tar.gz")
-        clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=self.proxy)
-        # try:
-        #     shutil.copytree("/tmp/plugins", "/opt/collectd/plugins")
-        # except shutil.Error as err:
-        #     print >> sys.stderr, err
+        download_file(COLLECTD_PLUGINS_ZIP, local_path="/tmp/collectd-plugins.zip", proxy=self.proxy)
+        unzip_file("/tmp/collectd-plugins.zip")
+        # clone_git_repo(COLLECTD_PLUGINS_REPO, COLLECTD_PLUGINS_DIR, proxy=self.proxy)
+        try:
+            shutil.copytree("/tmp/collectd-plugins-master", "/opt/collectd/plugins")
+        except shutil.Error as err:
+            print >> sys.stderr, err
         if os.path.isfile("{0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)):
             if self.proxy:
                 cmd = "pip install -r {0}/requirements.txt --proxy {1}".format(COLLECTD_PLUGINS_DIR, self.proxy)
@@ -440,12 +500,37 @@ class DeployAgent:
                 print err
 
                 # self._run_cmd("service collectd restart", shell=True)
+    def _check_configurator_status(self, port=DEFAULT_CONFIGURATOR_PORT):
+        try:
+            import urllib
+            url = "http://127.0.0.1:%s" % (port)
+            resp = urllib.urlopen(url)
+            return resp.code
+        except Exception:
+            return 404
+
+    def verify_configurator(self):
+        print "verify configurator"
+        code = self._check_configurator_status(self.port)
+        count = 0
+        while code != 200:
+            if count == 6:
+                print >> sys.stderr, "Error: Configurator-exporter not running"
+                sys.exit(128)
+            count += 1
+            sleep(5)
+            code = self._check_configurator_status(self.port)
+        print "verified"
 
     def _get_configurator_pid(self):
         pid = self._run_cmd("ps -face | grep -v grep | grep 'api_server' | awk '{print $2}'",
                             shell=True, print_output=True)
         return pid
 
+    def _get_collectd_pid(self):
+        pid = self._run_cmd("ps -face | grep -v grep | grep 'collectd' | awk '{print $2}'",
+                            shell=True, print_output=True)
+        return pid
     def stop_configurator_process(self):
         print "Stopping configurator"
         kill_process(self._get_configurator_pid())
@@ -463,7 +548,13 @@ class DeployAgent:
             shutil.rmtree(CONFIGURATOR_DIR, ignore_errors=True)
         print "downloading configurator..."
         # download_and_extract_tar(configurator_source_url, "/tmp/configurator.tar.gz", extract_dir="/opt")
-        clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR, proxy=self.proxy)
+        # clone_git_repo(CONFIGURATOR_SOURCE_REPO, CONFIGURATOR_DIR, proxy=self.proxy)
+        download_file(CONFIGURATOR_ZIP, local_path="/tmp/configurator.zip", proxy=self.proxy)
+        unzip_file("/tmp/configurator.zip")
+        try:
+            shutil.copytree("/tmp/configurator-exporter-master", "/opt/configurator-exporter")
+        except shutil.Error as err:
+            print >> sys.stderr, err
         print "setup configurator..."
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
@@ -476,17 +567,17 @@ class DeployAgent:
                 print cmd2
                 run_call(cmd2, shell=True)
                 sleep(1)
-            elif self.os == "centos":
+            elif self.os in ["centos", "redhat"]:
                 cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR,
                                                                                                 self.host,
                                                                                                 self.port)
                 print cmd2
                 run_call(cmd2, shell=True)
                 # sleep(5)
-            status = self._get_configurator_pid()
-            if not status:
-                print >> sys.stderr, "Error: Configurator-exporter failed to start"
-                sys.exit(128)
+            # status = self._get_configurator_pid()
+            # if not status:
+            #     print >> sys.stderr, "Error: Configurator-exporter failed to start"
+            #     sys.exit(128)
 
     def create_configurator_service(self):
         """
@@ -558,7 +649,7 @@ class DeployAgent:
         save_rule = "iptables-save"
         if self.os == "ubuntu":
             restart_iptables = "service ufw restart"
-        elif self.os == "centos":
+        elif self.os in ["centos", "redhat"]:
             save_rule = "iptables-save | sudo tee /etc/sysconfig/iptables"
             restart_iptables = "service iptables restart"
         else:
@@ -570,7 +661,7 @@ class DeployAgent:
         self._run_cmd(restart_iptables, shell=True, ignore_err=True)
 
 
-def install(collectd=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
+def install(collectd=True, setup=True, fluentd=True, configurator=True, configurator_host="0.0.0.0",
             configurator_port=DEFAULT_CONFIGURATOR_PORT,
             http_proxy=None, https_proxy=None, retries=None):
     """
@@ -584,9 +675,12 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
     :param https_proxy:
     :return:
     """
-    if not collectd and not fluentd:
-        print >> sys.stderr, "you cannot skip both collectd and fluentd installation"
-        sys.exit(128)
+
+    import time
+    begin = time.time()
+    # if not collectd and not fluentd and not configurator:
+    #     print >> sys.stderr, "you cannot skip all collectd and fluentd installation"
+    #     sys.exit(128)
 
     if http_proxy:
         set_env(http_proxy=http_proxy)
@@ -597,28 +691,50 @@ def install(collectd=True, fluentd=True, configurator=True, configurator_host="0
         proxy = http_proxy
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
-    update_hostfile()
-    obj.stop_configurator_process()
-    obj.install_dev_tools()
-    obj.install_pip()
-    obj.install_python_packages()
-
-    if configurator:
-        print "started installing configurator ..."
-        obj.install_configurator()
-        obj.configure_iptables()
-    # create_configurator_service()
+    if setup:
+        start = time.time()
+        update_hostfile()
+        obj.install_dev_tools()
+        obj.install_pip()
+        obj.install_python_packages()
+        print "=================package setup time in seconds============"
+        print time.time() - start
+        print "===================================="
 
     if collectd:
+        start = time.time()
         print "Started installing collectd ..."
         obj.setup_collectd()
         obj.add_collectd_plugins()
-        obj.create_collectd_service()
+        obj.start_collectd()
+        print "=================collectd setup time in seconds============"
+        print time.time() - start
+        print "===================================="
+        # obj.create_collectd_service()
 
     if fluentd:
+        start = time.time()
         print "started installing fluentd ..."
         obj.install_fluentd()
+        print "=================fluentd setup time in seconds============"
+        print time.time() - start
+        print "===================================="
 
+    if configurator:
+        start = time.time()
+        obj.stop_configurator_process()
+        print "started installing configurator ..."
+        obj.install_configurator()
+        obj.configure_iptables()
+        obj.verify_configurator()
+        print "=================configurator setup time in seconds============"
+        print time.time() - start
+        print "===================================="
+
+    # create_configurator_service()
+    print "=================total time in seconds============"
+    print time.time() - begin
+    print "===================================="
     sys.exit(0)
 
 
@@ -633,6 +749,8 @@ def get_os():
 if __name__ == '__main__':
     """main function"""
     parser = argparse.ArgumentParser()
+    parser.add_argument('-ss', '--skipsetup', action='store_false', default=True, dest='initialsetup',
+                        help='skip collectd installation')
     parser.add_argument('-sc', '--skipcollectd', action='store_false', default=True, dest='installcollectd',
                         help='skip collectd installation')
     parser.add_argument('-sf', '--skipfluentd', action='store_false', default=True, dest='installfluentd',
@@ -652,6 +770,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     install(collectd=args.installcollectd,
+            setup=args.initialsetup,
             fluentd=args.installfluentd,
             configurator=args.installconfigurator,
             configurator_host=args.host,
