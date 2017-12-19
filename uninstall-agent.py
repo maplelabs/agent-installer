@@ -72,6 +72,7 @@ def uninstall_collecd():
     run_cmd("service collectd stop", shell=True, ignore_err=True)
     if os.path.exists("/opt/collectd"):
         shutil.rmtree("/opt/collectd")
+    run_cmd("service collectd stop", shell=True, ignore_err=True)
     if os.path.exists("/etc/init.d/collectd"):
         os.remove("/etc/init.d/collectd")
     if os.path.exists("/etc/systemd/system/collectd.service"):
@@ -115,6 +116,11 @@ def uninstall_configurator():
     if os.path.exists("/opt/configurator-exporter"):
         print "removing /opt/configurator-exporter"
         shutil.rmtree("/opt/configurator-exporter")
+    run_cmd("service configurator stop", shell=True, ignore_err=True)
+    if os.path.exists("/etc/init.d/configurator"):
+        os.remove("/etc/init.d/configurator")
+    if os.path.exists("/etc/systemd/system/configurator.service"):
+        os.remove("/etc/systemd/system/configurator.service")
 
 
 def uninstall(removecollectd=True, removefluentd=True, removeconfigurator=True):

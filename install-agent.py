@@ -9,8 +9,8 @@ import socket
 import subprocess
 import sys
 import tarfile
-from time import sleep
 import zipfile
+from time import sleep
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
@@ -110,10 +110,12 @@ def download_and_extract_tar(tarfile_url, local_file_name, tarfile_type=None, ex
     except tarfile.TarError as err:
         print >> sys.stderr, err
 
+
 def unzip_file(zip_file, target_dir="/tmp"):
     zip_ref = zipfile.ZipFile(zip_file, 'r')
     zip_ref.extractall(target_dir)
     zip_ref.close()
+
 
 def clone_git_repo(REPO_URL, LOCAL_DIR, proxy=None):
     if proxy:
@@ -348,6 +350,7 @@ class DeployAgent:
                                      proxy=self.proxy, extract_dir="/opt/", tarfile_type="r:bz2")
         else:
             self.build_collectd()
+        self.create_collectd_service()
 
     def create_collectd_service(self):
         """
@@ -391,6 +394,7 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
 
         print "terminate any old instance of collectd if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
@@ -406,7 +410,8 @@ class DeployAgent:
             cmd = "nohup {0} -C {1} -P {2} &> /dev/null &".format(bin_file, config_file, pid_file)
             print cmd
             run_call(cmd, shell=True)
-        #/ opt / collectd / sbin / collectd - C / opt / collectd / etc / collectd.conf - P / opt / collectd / var / run / collectd.pid
+        # / opt / collectd / sbin / collectd - C / opt / collectd / etc / collectd.conf - P / opt / collectd / var / run / collectd.pid
+
     def start_collectd(self):
         print "terminate any old instance of collectd if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
@@ -420,6 +425,7 @@ class DeployAgent:
         if not pid:
             run_call(cmd, shell=True)
             sleep(1)
+
     def install_fluentd(self):
         """
         install fluentd and start the service
@@ -500,6 +506,7 @@ class DeployAgent:
                 print err
 
                 # self._run_cmd("service collectd restart", shell=True)
+
     def _check_configurator_status(self, port=DEFAULT_CONFIGURATOR_PORT):
         try:
             import urllib
@@ -531,6 +538,7 @@ class DeployAgent:
         pid = self._run_cmd("ps -face | grep -v grep | grep 'collectd' | awk '{print $2}'",
                             shell=True, print_output=True)
         return pid
+
     def stop_configurator_process(self):
         print "Stopping configurator"
         kill_process(self._get_configurator_pid())
@@ -558,21 +566,23 @@ class DeployAgent:
         print "setup configurator..."
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
-            if not check_open_port_available(port=self.port):
-                sys.exit(98)
+            self.create_configurator_service()
 
-            if self.os == "ubuntu":
-                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host,
-                                                                                   self.port)
-                print cmd2
-                run_call(cmd2, shell=True)
-                sleep(1)
-            elif self.os in ["centos", "redhat"]:
-                cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR,
-                                                                                                self.host,
-                                                                                                self.port)
-                print cmd2
-                run_call(cmd2, shell=True)
+            # if not check_open_port_available(port=self.port):
+            #     sys.exit(98)
+            #
+            # if self.os == "ubuntu":
+            #     cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &".format(CONFIGURATOR_DIR, self.host,
+            #                                                                        self.port)
+            #     print cmd2
+            #     run_call(cmd2, shell=True)
+            #     sleep(1)
+            # elif self.os in ["centos", "redhat"]:
+            #     cmd2 = "cd {0}; nohup python api_server.py -i {1} -p {2} &> /dev/null &".format(CONFIGURATOR_DIR,
+            #                                                                                     self.host,
+            #                                                                                     self.port)
+            #     print cmd2
+            #     run_call(cmd2, shell=True)
                 # sleep(5)
             # status = self._get_configurator_pid()
             # if not status:
@@ -602,8 +612,9 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
 
-        elif self.os == "centos":
+        elif self.os == "centos" or self.os == "redhat":
             print "found centos ..."
             version = platform.dist()[1]
             print "centos version: {0}".format(version)
@@ -621,6 +632,7 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
+                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
 
         print "terminate any old instance of configurator if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
@@ -710,7 +722,6 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
         print "=================collectd setup time in seconds============"
         print time.time() - start
         print "===================================="
-        # obj.create_collectd_service()
 
     if fluentd:
         start = time.time()
