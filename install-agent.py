@@ -350,7 +350,7 @@ class DeployAgent:
                                      proxy=self.proxy, extract_dir="/opt/", tarfile_type="r:bz2")
         else:
             self.build_collectd()
-        self.create_collectd_service()
+        # self.create_collectd_service()
 
     def create_collectd_service(self):
         """
@@ -718,7 +718,8 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
         print "Started installing collectd ..."
         obj.setup_collectd()
         obj.add_collectd_plugins()
-        obj.start_collectd()
+        obj.create_collectd_service()
+        # obj.start_collectd()
         print "=================collectd setup time in seconds============"
         print time.time() - start
         print "===================================="
