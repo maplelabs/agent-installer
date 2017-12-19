@@ -363,33 +363,33 @@ class DeployAgent:
             print "ubuntu version: {0}".format(version)
             if version < "16.04":
                 try:
-                    shutil.copyfile("/tmp/{0}/init_scripts/ubuntu14.init".format(COLLCTD_SOURCE_FILE),
+                    shutil.copyfile("/opt/collectd/init_scripts/ubuntu14.init",
                                     "/etc/init.d/collectd")
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("chmod +x /etc/init.d/collectd", shell=True)
             else:
                 try:
-                    shutil.copyfile("/tmp/{0}/init_scripts/ubuntu16.init".format(COLLCTD_SOURCE_FILE),
+                    shutil.copyfile("/opt/collectd/init_scripts/ubuntu16.init",
                                     "/etc/systemd/system/collectd.service")
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
 
-        elif self.os == "centos":
+        elif self.os == "centos" or self.os == "redhat":
             print "found centos ..."
             version = platform.dist()[1]
             print "centos version: {0}".format(version)
             if version < "7.0":
                 try:
-                    shutil.copyfile("/tmp/{0}/init_scripts/centos6.init".format(COLLCTD_SOURCE_FILE),
+                    shutil.copyfile("/opt/collectd/init_scripts/centos6.init",
                                     "/etc/init.d/collectd")
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("chmod +x /etc/init.d/collectd", shell=True)
             else:
                 try:
-                    shutil.copyfile("/tmp/{0}/init_scripts/centos7.init".format(COLLCTD_SOURCE_FILE),
+                    shutil.copyfile("/opt/collectd/init_scripts/centos7.init",
                                     "/etc/systemd/system/collectd.service")
                 except shutil.Error as err:
                     print >> sys.stderr, err
@@ -400,7 +400,7 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
         print "start collectd ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-        if self.os in ["ubuntu", "centos"]:
+        if self.os in ["ubuntu", "centos", "redhat"]:
             self._run_cmd("service collectd start", shell=True, print_output=True)
             self._run_cmd("service collectd status", shell=True, print_output=True)
         else:
@@ -583,7 +583,7 @@ class DeployAgent:
             #                                                                                     self.port)
             #     print cmd2
             #     run_call(cmd2, shell=True)
-                # sleep(5)
+            # sleep(5)
             # status = self._get_configurator_pid()
             # if not status:
             #     print >> sys.stderr, "Error: Configurator-exporter failed to start"
@@ -612,7 +612,7 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
+                self._run_cmd("systemctl enable configurator", shell=True, ignore_err=True)
 
         elif self.os == "centos" or self.os == "redhat":
             print "found centos ..."
@@ -632,14 +632,14 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
+                self._run_cmd("systemctl enable configurator", shell=True, ignore_err=True)
 
         print "terminate any old instance of configurator if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
                       ignore_err=True)
         print "start configurator ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-        self._run_cmd("sudo service configurator start", shell=True, print_output=True)
+        self._run_cmd("service configurator start", shell=True, print_output=True)
         self._run_cmd("service configurator status", shell=True, print_output=True)
 
     def remove_iptables_rule(self):
