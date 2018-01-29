@@ -436,7 +436,7 @@ class DeployAgent:
         fluentd_file_name = "/tmp/install-fluentd.sh"
         if self.os == "ubuntu":
             print "install fluentd for ubuntu {0} {1}".format(version, name)
-            fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent2.sh".format(
+            fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent3.sh".format(
                 name)
             # urllib.urlretrieve(fluentd_install_url_ubuntu.format(name), "/tmp/install-ubuntu-{0}-td-agent2.sh".format(name))
             # self._run_cmd("sh /tmp/install-ubuntu-{0}-td-agent2.sh".format(name), shell=True)
@@ -449,7 +449,8 @@ class DeployAgent:
 
         elif self.os in ["centos", "redhat"]:
             print "install fluentd for centos/redhat {0} {1}".format(version, name)
-            fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh"
+            # fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh"
+            fluentd_install_url_centos = "https://toolbelt.treasuredata.com/sh/install-redhat-td-agent3.sh"
             # urllib.urlretrieve(fluentd_install_url_centos, "/tmp/install-redhat-td-agent2.sh")
             #
             download_file(fluentd_install_url_centos, fluentd_file_name, self.proxy)
