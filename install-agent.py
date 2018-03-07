@@ -182,6 +182,10 @@ class DeployAgent:
         if self.retries is None:
             self.retries = DEFAULT_RETRIES
         self.os = get_os()
+        self.pip = 'pip'
+        self.python = 'python'
+        if os.path.isfile("/usr/bin/python"):
+            self.python = "/usr/bin/python"
 
     def _run_cmd(self, cmd, shell, ignore_err=False, print_output=False):
         """
@@ -192,7 +196,7 @@ class DeployAgent:
         :param print_output:
         :return:
         """
-
+        print cmd
         for i in xrange(self.retries):
             try:
                 output = subprocess.check_output(cmd, shell=shell)
@@ -293,7 +297,12 @@ class DeployAgent:
         #     cmd = "curl -o /tmp/get-pip.py {0}".format(pip_install_url)
         # print cmd
         # run_call(cmd, shell=True)
-        self._run_cmd("python {0}".format(local_file), shell=True)
+        self._run_cmd("{0} {1}".format(self.python, local_file), shell=True)
+        if os.path.isfile("/usr/local/bin/pip"):
+            self.pip = "/usr/local/bin/pip"
+        elif os.path.isfile("/usr/bin/pip"):
+            self.pip = "/usr/bin/pip"
+        print "pip binary {0}".format(self.pip)
 
     def install_python_packages(self):
         """
@@ -302,11 +311,11 @@ class DeployAgent:
         """
         print "install python packages using pip"
         if self.proxy:
-            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml requests" \
-                   "mako web.py pyopenssl --proxy {0}".format(self.proxy)
+            cmd2 = "{0} install --upgrade setuptools collectd psutil argparse pyyaml requests" \
+                   "mako web.py pyopenssl --proxy {1}".format(self.pip, self.proxy)
         else:
-            cmd2 = "pip install --upgrade setuptools collectd psutil argparse pyyaml mako " \
-                   "requests web.py pyopenssl"
+            cmd2 = "{0} install --upgrade setuptools collectd psutil argparse pyyaml mako " \
+                   "requests web.py pyopenssl".format(self.pip)
         self._run_cmd(cmd2, shell=True)
 
     def build_collectd(self):
@@ -491,9 +500,9 @@ class DeployAgent:
             print >> sys.stderr, err
         if os.path.isfile("{0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)):
             if self.proxy:
-                cmd = "pip install -r {0}/requirements.txt --proxy {1}".format(COLLECTD_PLUGINS_DIR, self.proxy)
+                cmd = "{0} install -r {1}/requirements.txt --proxy {2}".format(self.pip, COLLECTD_PLUGINS_DIR, self.proxy)
             else:
-                cmd = "pip install -r {0}/requirements.txt".format(COLLECTD_PLUGINS_DIR)
+                cmd = "{0} install -r {1}/requirements.txt".format(self.pip, COLLECTD_PLUGINS_DIR)
             self._run_cmd(cmd, shell=True, ignore_err=True)
         try:
             shutil.move("{0}/collectd.conf".format(COLLECTD_PLUGINS_DIR), "/opt/collectd/etc/collectd.conf")
