@@ -241,7 +241,10 @@ class DeployAgent:
                    "-o Dpkg::Options::='--force-confold' update"
             # cmd2 = "apt-get install -y pkg-config build-essential libpthread-stubs0-dev curl " \
             #        "zlib1g-dev python-dev python-pip libcurl4-openssl-dev libvirt-dev sudo libmysqlclient-dev git wget"
-            cmd2 = "apt-get install -y gcc make curl python-dev sudo wget libmysqlclient-dev libcurl4-openssl-dev"
+            # cmd2 = "apt-get install -y gcc make curl python-dev sudo wget libmysqlclient-dev libcurl4-openssl-dev"
+            cmd2 = "DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' " \
+                   "-o Dpkg::Options::='--force-confold' install gcc make curl python-dev sudo wget " \
+                   "libmysqlclient-dev libcurl4-openssl-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
@@ -384,7 +387,7 @@ class DeployAgent:
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-
+                self._run_cmd("systemctl enable collectd", shell=True, ignore_err=True)
         elif self.os == "centos" or self.os == "redhat":
             print "found centos ..."
             version = platform.dist()[1]
@@ -484,6 +487,7 @@ class DeployAgent:
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
         print "Get fluentd status..."
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
+        self._run_cmd("systemctl enable td-agent", shell=True, ignore_err=True)
 
     def add_collectd_plugins(self):
         """
