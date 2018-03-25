@@ -314,7 +314,7 @@ class DeployAgent:
         """
         print "install python packages using pip"
         if self.proxy:
-            cmd2 = "{0} install --upgrade setuptools collectd psutil argparse pyyaml requests" \
+            cmd2 = "{0} install --upgrade setuptools collectd psutil argparse pyyaml requests " \
                    "mako web.py pyopenssl --proxy {1}".format(self.pip, self.proxy)
         else:
             cmd2 = "{0} install --upgrade setuptools collectd psutil argparse pyyaml mako " \
