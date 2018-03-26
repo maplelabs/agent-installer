@@ -174,7 +174,7 @@ def check_open_port_available(port, address="127.0.0.1"):
 
 
 class DeployAgent:
-    def __init__(self, host, port, proxy, retries=None):
+    def __init__(self, host, port, proxy=None, retries=None):
         self.host = host
         self.port = port
         self.proxy = proxy
