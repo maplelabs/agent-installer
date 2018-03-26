@@ -52,7 +52,7 @@ if "check_output" not in dir(subprocess):
     subprocess.check_output = f
 
 
-def verset_env(**kwargs):
+def set_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
 
