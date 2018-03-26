@@ -52,7 +52,7 @@ if "check_output" not in dir(subprocess):
     subprocess.check_output = f
 
 
-def set_env(**kwargs):
+def verset_env(**kwargs):
     for key, value in kwargs.iteritems():
         os.environ[key] = value
 
@@ -523,9 +523,13 @@ class DeployAgent:
 
     def _check_configurator_status(self, port=DEFAULT_CONFIGURATOR_PORT):
         try:
-            import urllib
+            import urllib2
             url = "http://127.0.0.1:%s" % (port)
-            resp = urllib.urlopen(url)
+            # resp = urllib.urlopen(url)
+            proxy_handler = urllib2.ProxyHandler({})
+            opener = urllib2.build_opener(proxy_handler)
+            req = urllib2.Request(url)
+            resp = opener.open(req)
             return resp.code
         except Exception:
             return 404
