@@ -708,13 +708,17 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
     #     print >> sys.stderr, "you cannot skip all collectd and fluentd installation"
     #     sys.exit(128)
 
-    if http_proxy:
+    if http_proxy and not os.environ.get("http_proxy"):
         set_env(http_proxy=http_proxy)
-    if https_proxy:
+    if https_proxy and not os.environ.get("https_proxy"):
         set_env(http_proxy=https_proxy)
-    proxy = https_proxy
-    if not proxy:
-        proxy = http_proxy
+    noproxy = os.environ.get("no_proxy", "")
+    if "127.0.0.1" not in noproxy and (os.environ.get("http_proxy") or os.environ.get("https_proxy")):
+        noproxy = "127.0.0.1,localhost"
+        set_env(no_proxy=noproxy)
+    # proxy = https_proxy
+    # if not proxy:
+    #     proxy = http_proxy
 
     obj = DeployAgent(host=configurator_host, port=configurator_port, proxy=proxy, retries=retries)
     if setup:
