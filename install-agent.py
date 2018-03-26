@@ -716,7 +716,7 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
     if "127.0.0.1" not in noproxy and (os.environ.get("http_proxy") or os.environ.get("https_proxy")):
         noproxy = "127.0.0.1,localhost"
         set_env(no_proxy=noproxy)
-    # proxy = https_proxy
+    proxy = None
     # if not proxy:
     #     proxy = http_proxy
 
