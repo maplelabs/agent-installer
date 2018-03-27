@@ -384,6 +384,10 @@ class DeployAgent:
                 try:
                     shutil.copyfile("/opt/collectd/init_scripts/ubuntu16.init",
                                     "/etc/systemd/system/collectd.service")
+                    if os.path.isfile("/opt/collectd/init_scripts/collectd_default") and not os.path.isfile(
+                            "/etc/default/collectd"):
+                        shutil.copyfile("/opt/collectd/init_scripts/collectd_default",
+                                        "/etc/default/collectd")
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
@@ -403,6 +407,10 @@ class DeployAgent:
                 try:
                     shutil.copyfile("/opt/collectd/init_scripts/centos7.init",
                                     "/etc/systemd/system/collectd.service")
+                    if os.path.isfile("/opt/collectd/init_scripts/collectd_default") and not os.path.isfile(
+                            "/etc/default/collectd"):
+                        shutil.copyfile("/opt/collectd/init_scripts/collectd_default",
+                                        "/etc/default/collectd")
                 except shutil.Error as err:
                     print >> sys.stderr, err
                 self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
