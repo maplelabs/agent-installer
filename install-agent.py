@@ -454,7 +454,12 @@ class DeployAgent:
 
         distro, version, name = platform.dist()
         fluentd_file_name = "/tmp/install-fluentd.sh"
-        if self.os == "ubuntu":
+        if self.os == "ubuntu" or self.os == "debian":
+            if self.os == "debian":
+                cmd = "grep 'UBUNTU_CODENAME=' /etc/os-release"
+                p = subprocess.Popen(cmd, shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                out, err = p.communicate()
+                name =  out.split("UBUNTU_CODENAME=")[1].strip()
             print "install fluentd for ubuntu {0} {1}".format(version, name)
             fluentd_install_url_ubuntu = "https://toolbelt.treasuredata.com/sh/install-ubuntu-{0}-td-agent3.sh".format(
                 name)
