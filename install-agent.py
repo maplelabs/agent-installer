@@ -300,7 +300,7 @@ class DeployAgent:
         #     cmd = "curl -o /tmp/get-pip.py {0}".format(pip_install_url)
         # print cmd
         # run_call(cmd, shell=True)
-        self._run_cmd("{0} {1}".format(self.python, local_file), shell=True)
+        self._run_cmd("{0} {1} {2}".format(self.python, local_file, "pip==9.0.2"), shell=True)
         if os.path.isfile("/usr/local/bin/pip"):
             self.pip = "/usr/local/bin/pip"
         elif os.path.isfile("/usr/bin/pip"):
