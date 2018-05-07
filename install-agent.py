@@ -137,7 +137,10 @@ def update_hostfile():
         new_data = []
         found = False
         for line in data:
-            if IP in line and not line.startswith("#"):
+            if hostname in line and not line.startswith(IP):
+                new_data.append(line)
+                found = True
+            elif IP in line and not line.startswith("#"):
                 if hostname not in line:
                     line = "{0} {1}".format(line, hostname)
                     new_data.append(line)
