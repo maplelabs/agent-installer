@@ -598,6 +598,13 @@ class DeployAgent:
         except shutil.Error as err:
             print >> sys.stderr, err
         print "setup configurator..."
+        if os.path.isfile("{0}/requirements.txt".format(CONFIGURATOR_DIR)):
+            if self.proxy:
+                cmd = "{0} install -r {1}/requirements.txt --proxy {2}".format(self.pip, CONFIGURATOR_DIR, self.proxy)
+            else:
+                cmd = "{0} install -r {1}/requirements.txt".format(self.pip, CONFIGURATOR_DIR)
+            self._run_cmd(cmd, shell=True, ignore_err=True)
+
         if os.path.isdir(CONFIGURATOR_DIR):
             print "starting configurator ..."
             self.create_configurator_service()
