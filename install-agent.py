@@ -486,8 +486,10 @@ class DeployAgent:
                 self._add_proxy_for_curl_in_file(self.proxy, fluentd_file_name)
                 self._add_proxy_for_rpm_in_file(self.proxy, fluentd_file_name)
             self._run_cmd("sh {0}".format(fluentd_file_name), shell=True)
+        """
         self._run_cmd("yes | cp ./td-agent.conf /opt/td-agent/etc/td-agent/", shell=True)
         self._run_cmd("yes | cp ./td-agent.conf /etc/td-agent/", shell=True)
+        """
         cmd = "usermod -a -G adm td-agent"
         print "Adding user td-agent to the group adm"
         self._run_cmd(cmd, ignore_err=True, shell=True)
