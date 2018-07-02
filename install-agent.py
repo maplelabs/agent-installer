@@ -490,8 +490,8 @@ class DeployAgent:
         self._run_cmd("yes | cp ./td-agent.conf /opt/td-agent/etc/td-agent/", shell=True)
         self._run_cmd("yes | cp ./td-agent.conf /etc/td-agent/", shell=True)
         """
-        self._run_cmd("sed -i '/port 8888/s/^/#/' /opt/td-agent/etc/td-agent/td-agent.conf", shell=True)
         self._run_cmd("sed -i '/port 8888/s/^/#/' /etc/td-agent/td-agent.conf", shell=True)
+        self._run_cmd("sed -i '/port 8888/s/^/#/' /opt/td-agent/etc/td-agent/td-agent.conf", shell=True)
         cmd = "usermod -a -G adm td-agent"
         print "Adding user td-agent to the group adm"
         self._run_cmd(cmd, ignore_err=True, shell=True)
