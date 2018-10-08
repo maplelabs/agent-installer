@@ -294,7 +294,7 @@ class DeployAgent:
 
     def install_pip(self):
         print "install latest version of pip"
-        pip_install_url = "https://bootstrap.pypa.io/get-pip.py"
+        pip_install_url = "https://bootstrap.pypa.io/2.6/get-pip.py"
         local_file = "/tmp/get-pip.py"
         download_file(pip_install_url, local_file, self.proxy)
         # if proxy:
