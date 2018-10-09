@@ -805,7 +805,11 @@ def get_os():
     return os name
     :return:
     """
-    return platform.dist()[0].lower()
+    os = platform.dist()[0].lower()
+    if os == "oracle":
+        return "redhat"
+    else:
+        return os
 
 
 if __name__ == '__main__':
