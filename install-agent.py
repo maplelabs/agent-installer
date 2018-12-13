@@ -11,6 +11,7 @@ import sys
 import tarfile
 import zipfile
 from time import sleep
+from subprocess import check_output
 
 COLLCTD_SOURCE_URL = "https://github.com/maplelabs/collectd/releases/download/" \
                      "collectd-custom-5.6.1/collectd-custom-5.6.1.tar.bz2"
@@ -130,7 +131,9 @@ def update_hostfile():
     hosts_file = "/etc/hosts"
     hostname = platform.node()
     hostname = hostname.strip()
-    IP = "127.0.1.1"
+    #IP = "127.0.1.1"
+    ips = check_output(['hostname', '--all-ip-addresses'])
+    IP = ips.strip()
     try:
         f = open(hosts_file, "r")
         data = f.readlines()
