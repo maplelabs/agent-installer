@@ -188,8 +188,9 @@ class DeployAgent:
         if self.retries is None:
             self.retries = DEFAULT_RETRIES
         self.os = get_os()
-        self.pip = 'pip'
+        #self.pip = 'pip'
         self.python = 'python'
+        self.pip = self.python + " -m pip"
         #if os.path.isfile("/usr/bin/python"):
         #    self.python = "/usr/bin/python"
         #    self.pip = self.python + " -m pip"
