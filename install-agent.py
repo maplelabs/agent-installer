@@ -192,7 +192,8 @@ class DeployAgent:
         self.python = 'python'
         if os.path.isfile("/usr/bin/python"):
             self.python = "/usr/bin/python"
-
+            self.pip = self.python + " -m pip"
+            
     def _run_cmd(self, cmd, shell, ignore_err=False, print_output=False):
         """
         return output and status after runing a shell command
