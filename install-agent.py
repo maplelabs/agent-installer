@@ -190,9 +190,9 @@ class DeployAgent:
         self.os = get_os()
         self.pip = 'pip'
         self.python = 'python'
-        #if os.path.isfile("/usr/bin/python"):
-        #    self.python = "/usr/bin/python"
-        #    self.pip = self.python + " -m pip"
+        if os.path.isfile("/usr/bin/python"):
+            self.python = "/usr/bin/python"
+            self.pip = self.python + " -m pip"
             
     def _run_cmd(self, cmd, shell, ignore_err=False, print_output=False):
         """
@@ -308,10 +308,10 @@ class DeployAgent:
         # print cmd
         # run_call(cmd, shell=True)
         self._run_cmd("{0} {1} {2}".format(self.python, local_file, "pip==9.0.2"), shell=True)
-        if os.path.isfile("/usr/local/bin/pip"):
-            self.pip = "/usr/local/bin/pip"
-        elif os.path.isfile("/usr/bin/pip"):
-            self.pip = "/usr/bin/pip"
+        #if os.path.isfile("/usr/local/bin/pip"):
+        #    self.pip = "/usr/local/bin/pip"
+        #elif os.path.isfile("/usr/bin/pip"):
+        #    self.pip = "/usr/bin/pip"
         print "pip binary {0}".format(self.pip)
 
     def install_python_packages(self):
