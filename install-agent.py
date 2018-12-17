@@ -190,9 +190,9 @@ class DeployAgent:
         self.os = get_os()
         self.pip = 'pip'
         self.python = 'python'
-        if os.path.isfile("/usr/bin/python"):
-            self.python = "/usr/bin/python"
-            self.pip = self.python + " -m pip"
+        #if os.path.isfile("/usr/bin/python"):
+        #    self.python = "/usr/bin/python"
+        #    self.pip = self.python + " -m pip"
             
     def _run_cmd(self, cmd, shell, ignore_err=False, print_output=False):
         """
