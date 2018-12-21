@@ -645,6 +645,8 @@ class DeployAgent:
         create a service for collectd installed
         :return:
         """
+        print "create_configurator_Service started"
+        print "OS is: {0}".format(self.os)
         if self.os == "ubuntu":
             print "found ubuntu ..."
             version = platform.dist()[1]
