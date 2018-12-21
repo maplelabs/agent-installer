@@ -377,7 +377,7 @@ class DeployAgent:
         create a service for collectd installed
         :return:
         """
-        if self.os == "ubuntu":
+        if self.os == "ubuntu" or self.os == "debian":
             print "found ubuntu ..."
             version = platform.dist()[1]
             print "ubuntu version: {0}".format(version)
@@ -428,7 +428,7 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
         print "start collectd ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
-        if self.os in ["ubuntu", "centos", "redhat"]:
+        if self.os in ["ubuntu","debian", "centos", "redhat"]:
             self._run_cmd("service collectd start", shell=True, print_output=True)
             self._run_cmd("service collectd status", shell=True, print_output=True)
         else:
@@ -647,7 +647,7 @@ class DeployAgent:
         """
         print "create_configurator_Service started"
         print "OS is: {0}".format(self.os)
-        if self.os == "ubuntu":
+        if self.os == "ubuntu" or self.os == "debian":
             print "found ubuntu ..."
             version = platform.dist()[1]
             print "ubuntu version: {0}".format(version)
@@ -712,7 +712,7 @@ class DeployAgent:
         """
         add_rule = "iptables -I INPUT 1 -p tcp -m tcp --dport {0} -j ACCEPT".format(self.port)
         save_rule = "iptables-save"
-        if self.os == "ubuntu":
+        if self.os == "ubuntu" or self.os == "debian":
             restart_iptables = "service ufw restart"
         elif self.os in ["centos", "redhat"]:
             save_rule = "iptables-save | sudo tee /etc/sysconfig/iptables"
