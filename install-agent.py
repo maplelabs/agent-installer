@@ -252,7 +252,7 @@ class DeployAgent:
             # cmd2 = "apt-get install -y gcc make curl python-dev sudo wget libmysqlclient-dev libcurl4-openssl-dev"
             cmd2 = "DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' " \
                    "-o Dpkg::Options::='--force-confold' install gcc make curl python-dev sudo wget " \
-                   "libmysqlclient-dev libcurl4-openssl-dev sysstat"
+                   "libmysqlclient-dev libcurl4-openssl-dev sysstat krb5-user libkrb5-dev"
             self._run_cmd(cmd1, shell=True)
             self._run_cmd(cmd2, shell=True)
 
@@ -261,7 +261,7 @@ class DeployAgent:
             # cmd1 = "yum groupinstall -y 'Development Tools'"
             # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
             # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
-            cmd1 = "yum install --skip-broken -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2 perfi sysstat"
+            cmd1 = "yum install --skip-broken -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2 perfi sysstat krb5-workstation krb5-devel"
             # cmd3 = "yum update -y"
 
             # self._run_cmd(cmd3, shell=True)
