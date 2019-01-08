@@ -802,6 +802,9 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
         print "===================================="
 
     # create_configurator_service()
+    print "=================RESTARTIGN CONFIGURATOR AGAIN============"
+    self._run_cmd("service configurator restart", shell=True, print_output=True)
+    self._run_cmd("service configurator status", shell=True, print_output=True)
     print "=================total time in seconds============"
     print time.time() - begin
     print "===================================="
