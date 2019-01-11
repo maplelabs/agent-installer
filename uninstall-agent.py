@@ -91,7 +91,7 @@ def uninstall_fluentd():
         print "removing ubuntu fluentd ..."
         run_cmd("apt-get remove -y td-agent", shell=True)
         run_cmd("apt-get purge -y td-agent", shell=True)
-    elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat":
+    elif platform.dist()[0].lower() == "centos" or platform.dist()[0].lower() == "redhat" or platform.dist()[0].lower() == "oracle":
         print "removing redhat fluentd ..."
         run_cmd("yum remove -y td-agent", shell=True)
     if os.path.exists("/opt/td-agent"):
