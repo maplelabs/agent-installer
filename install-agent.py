@@ -262,7 +262,7 @@ class DeployAgent:
             # cmd1 = "yum -y install libcurl libcurl-devel rrdtool rrdtool-devel rrdtool-prel libgcrypt-devel gcc make gcc-c++"
             # cmd2 = "yum install -y curl python-devel libcurl libvirt-devel perl-ExtUtils-Embed sudo mysql-devel git wget"
             #cmd1 = "yum install --skip-broken -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2 perfi sysstat krb5-workstation krb5-devel"
-            cmd1 = "yum install --skip-broken -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2 perfi sysstat"
+            cmd1 = "yum install --skip-broken -y gcc gcc-c++ curl python-devel sudo mysql-devel wget bzip2 perfi sysstat nc"
             # cmd3 = "yum update -y"
 
             # self._run_cmd(cmd3, shell=True)
