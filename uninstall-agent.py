@@ -1,3 +1,9 @@
+"""
+*******************
+*Copyright 2017, MapleLabs, All Rights Reserved.
+*
+********************
+"""
 import os
 import shutil
 import subprocess
