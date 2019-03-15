@@ -522,7 +522,7 @@ class DeployAgent:
         # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
 
    
-    def start_fluentd_services(self):
+    def start_fluentd_service(self):
         print "start fluentd ..."
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
         sleep(5)
@@ -814,7 +814,6 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
         print "started installing configurator ..."
         obj.install_configurator()
         obj.configure_iptables()
-        obj.verify_configurator()
         print "=================configurator setup time in seconds============"
         print time.time() - start
         print "===================================="
