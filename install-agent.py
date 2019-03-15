@@ -434,10 +434,13 @@ class DeployAgent:
 
         print "terminate any old instance of collectd if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'collectd' | awk '{print $2}')", shell=True, ignore_err=True)
+
+    def start_collectd_service(self):
         print "start collectd ..."
         # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
         if self.os in ["ubuntu","debian", "centos", "redhat"]:
             self._run_cmd("service collectd start", shell=True, print_output=True)
+            sleep(5)
             self._run_cmd("service collectd status", shell=True, print_output=True)
         else:
             bin_file = "/opt/collectd/sbin/collectd"
@@ -517,8 +520,12 @@ class DeployAgent:
         # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-mysqlslowquery", shell=True)
         # print "Install fluentd fluent-plugin-kafka..."
         # self._run_cmd("/usr/sbin/td-agent-gem install fluent-plugin-kafka", shell=True)
+
+   
+    def start_fluentd_services(self):
         print "start fluentd ..."
         self._run_cmd("/etc/init.d/td-agent start", shell=True)
+        sleep(5)
         print "Get fluentd status..."
         self._run_cmd("/etc/init.d/td-agent status", shell=True, print_output=True)
         self._run_cmd("systemctl enable td-agent", shell=True, ignore_err=True)
@@ -698,10 +705,14 @@ class DeployAgent:
         print "terminate any old instance of configurator if available"
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
                       ignore_err=True)
+
+    def start_configurator_service(self):
         print "start configurator ..."
-        # self._run_cmd("systemctl daemon-reload", shell=True, ignore_err=True)
         self._run_cmd("service configurator start", shell=True, print_output=True)
+        sleep(5)
         self._run_cmd("service configurator status", shell=True, print_output=True)
+
+        verify_configurator()
 
     def remove_iptables_rule(self):
         """
@@ -808,7 +819,16 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
         print time.time() - start
         print "===================================="
 
-    # create_configurator_service()
+    print "=================starting all the services========"
+    print "===================================="
+    if collectd:
+        obj.start_collectd_service()
+    if fluentd:
+        obj.start_fluentd_service()
+    if configurator:
+        obj.start_configurator_service()
+
+   
     print "=================total time in seconds============"
     print time.time() - begin
     print "===================================="
