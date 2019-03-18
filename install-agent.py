@@ -706,13 +706,19 @@ class DeployAgent:
         self._run_cmd("kill $(ps aux | grep -v grep | grep 'api_server' | awk '{print $2}')", shell=True,
                       ignore_err=True)
 
+    def restart_configurator_service(self):
+        print "restart configurator ..."
+        self._run_cmd("service configurator restart", shell=True, print_output=True)
+        sleep(5)
+        self._run_cmd("service configurator status", shell=True, print_output=True)
+
     def start_configurator_service(self):
         print "start configurator ..."
         self._run_cmd("service configurator start", shell=True, print_output=True)
         sleep(5)
         self._run_cmd("service configurator status", shell=True, print_output=True)
 
-        verify_configurator()
+        self.verify_configurator()
 
     def remove_iptables_rule(self):
         """
@@ -822,6 +828,7 @@ def install(collectd=True, setup=True, fluentd=True, configurator=True, configur
     print "===================================="
     if collectd:
         obj.start_collectd_service()
+        obj.restart_configurator_service()
     if fluentd:
         obj.start_fluentd_service()
     if configurator:
